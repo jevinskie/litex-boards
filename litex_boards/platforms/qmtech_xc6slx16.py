@@ -64,7 +64,7 @@ class Platform(XilinxPlatform):
         XilinxPlatform.__init__(self, "xc6slx16-ftg256-2", _io, _connectors)
 
     def create_programmer(self):
-        return XC3SProg(cable="ftdi")
+        return XC3SProg(cable="ft4232h")
 
     def do_finalize(self, fragment):
         XilinxPlatform.do_finalize(self, fragment)
