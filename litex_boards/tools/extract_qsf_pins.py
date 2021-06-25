@@ -25,7 +25,7 @@ https://www.intel.com/content/www/us/en/programmable/products/boards_and_kits/de
 The "extras" section and name parsing rules will need modification to support other boards.
 """
 
-def qsf_to_litex(qsf_path: str):
+def qsf_to_pins(qsf_path: str):
 	pins = {}
 	lines = open(qsf_path).readlines()
 	for l in lines:
@@ -102,9 +102,35 @@ def qsf_to_litex(qsf_path: str):
 	return pins
 
 
+def pins_to_litex(pins):
+	for pin_name, pin in pins.items():
+		iostd = pin['iostd'] if 'iostd' in pin else None
+		misc = pin['misc'] if 'misc' in pin else None
+
+		if 'pads' not in pin:
+			lpin = [f'"{pin_name}"', '0', f'Pins("{pin["pad"]}")']
+			if iostd is not None:
+				lpin.append(f'IOStandard("{iostd}")')
+			if misc is not None:
+				for mk, mv in misc.items():
+					lpin.append(f'Misc(["{mk}", "{mv}"])')
+			print('(' + ', '.join(lpin) + '),')
+		else:
+			pads = pin['pads']
+			for i, pad in enumerate(pads):
+				lpin = [f'"{pin_name}"', f'{i}', f'Pins("{pad}")']
+				if iostd is not None:
+					lpin.append(f'IOStandard("{iostd}")')
+				if misc is not None:
+					for mk, mv in misc.items():
+						lpin.append(f'Misc(["{mk}", "{mv}"])')
+				print('(' + ', '.join(lpin) + '),')
+	return
+
 if __name__ == '__main__':
-	pins = qsf_to_litex(sys.argv[1])
+	pins = qsf_to_pins(sys.argv[1])
 	# print(pins)
 	pp(pins)
 	print(len(pins))
+	pins_to_litex(pins)
 	sys.exit(0)
