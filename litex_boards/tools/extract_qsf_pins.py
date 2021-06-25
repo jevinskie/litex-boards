@@ -14,6 +14,8 @@ import sys
 from rich import print
 import pretty_errors
 
+import pp
+
 """
 This is a script to parse an Altera QSF file and produce a LiteX board Python file.
 
@@ -37,7 +39,7 @@ def qsf_to_litex(qsf_path: str):
 				pin_name, idx = pin_name.split('[')
 				idx = int(idx[:-1])
 			pin_pad = l[1].removeprefix('PIN_')
-			pins[pin_name_orig] = {'name': pin_name, 'pad': pin_pad}
+			pins[pin_name_orig] = {'name': pin_name, 'name_orig': pin_name_orig, 'pad': pin_pad}
 			if idx is not None:
 				pins[pin_name_orig]['idx'] = idx
 		elif len(l) == 6 and l[0] == 'set_instance_assignment' and l[1] == '-name' and l[2] == 'IO_STANDARD' and l[4] == '-to':
@@ -53,11 +55,56 @@ def qsf_to_litex(qsf_path: str):
 			pins[pin_name_orig]['misc'][misc_key] = misc_val
 		else:
 			if len(l) > 0:
-				print(l)
+				# print(l)
+				pass
+
+	# post process arrays and subsignals
+	pin_arrays = {}
+	for pin_name_orig, pin in pins.items():
+		# print(f'{pin_name_orig}: {pin}')
+		if 'idx' in pin:
+			if pin['name'] not in pin_arrays:
+				pin_arrays[pin['name']] = []
+			pin_arrays[pin['name']].append(pin)
+	# print(f'pin_arrays: {pin_arrays}')
+	# pp(pin_arrays)
+
+	pin_groups = {}
+	for group_name, pin_array in pin_arrays.items():
+		pin_array.sort(key=lambda p: p['idx'])
+		assert min([p['idx'] for p in pin_array]) == 0
+		sz = max([p['idx'] for p in pin_array]) + 1
+		assert sz == len(pin_array)
+		iostd = None
+		if 'iostd' in pin_array[0]:
+			iostd = pin_array[0]['iostd']
+			for p in pin_array:
+				assert p['iostd'] == iostd
+		misc = None
+		if 'misc' in pin_array[0]:
+			misc = pin_array[0]['misc']
+			for p in pin_array:
+				# if 'misc' not in p:
+				# 	print(f'misc missing from p: {p}')
+				# if 'misc' in p and p['misc'] != misc:
+				# 	print(f'p: {p} misc: {misc}')
+				assert p['misc'] == misc
+		pin_groups[group_name] = {'pads': [p['pad'] for p in pin_array]}
+		if iostd is not None:
+			pin_groups[group_name]['iostd'] = iostd
+		if misc is not None:
+			pin_groups[group_name]['misc'] = misc
+		for p in pin_array:
+			del pins[p['name_orig']]
+		pins[group_name] = pin_groups[group_name]
+	# pp(pin_groups)
+
 	return pins
 
 
 if __name__ == '__main__':
 	pins = qsf_to_litex(sys.argv[1])
-	print(pins)
+	# print(pins)
+	pp(pins)
+	print(len(pins))
 	sys.exit(0)
