@@ -10,14 +10,12 @@ import os
 import argparse
 
 from migen import *
-from litex_boards.platforms import deca
+from litex_boards.platforms import altera_max10_dev_kit
 
 from litex.soc.cores.clock import Max10PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
-from litex.soc.cores.video import VideoDVIPHY
 from litex.soc.cores.led import LedChaser
-from litex.soc.cores.bitbang import I2CMaster
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -25,8 +23,6 @@ class _CRG(Module):
     def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
-        self.clock_domains.cd_hdmi   = ClockDomain()
-        self.clock_domains.cd_usb    = ClockDomain()
 
         # # #
 
@@ -38,40 +34,24 @@ class _CRG(Module):
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
-        pll.create_clkout(self.cd_hdmi, 40e6)
-
-        # USB PLL.
-        if with_usb_pll:
-            ulpi  = platform.request("ulpi")
-            self.comb += ulpi.cs.eq(1) # Enable ULPI chip to enable the ULPI clock.
-            self.submodules.usb_pll = pll = Max10PLL(speedgrade="-6")
-            self.comb += pll.reset.eq(self.rst)
-            pll.register_clkin(ulpi.clk, 60e6)
-            pll.create_clkout(self.cd_usb, 60e6, phase=-120) # -120° from DECA's example (also validated with LUNA).
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), with_video_terminal=False, **kwargs):
-        self.platform = platform = deca.Platform()
-
-        # Defaults to JTAG-UART since no hardware UART.
-        if kwargs["uart_name"] == "serial":
-            kwargs["uart_name"] = "jtag_atlantic"
+    def __init__(self, sys_clk_freq=int(50e6), uart_name="uartbone", uart_baudrate=3_000_000, uart_fifo_depth=512, **kwargs):
+        self.platform = platform = altera_max10_dev_kit.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident         = "LiteX SoC on Terasic DECA",
+            ident         = "LiteX SoC on Altera's Max 10 dev kit",
             ident_version = True,
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
 
-        # Video ------------------------------------------------------------------------------------
-        if with_video_terminal:
-            self.submodules.videophy = VideoDVIPHY(platform.request("hdmi"), clock_domain="hdmi")
-            self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi")
+        # JTAGBone
+        # self.add_jtagbone() # No Altera JTAG PHY (yet...)
 
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
@@ -85,14 +65,12 @@ def main():
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
     parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
-    parser.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA)")
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()
 
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
-        with_video_terminal      = args.with_video_terminal,
         **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))

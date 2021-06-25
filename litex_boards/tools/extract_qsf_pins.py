@@ -55,7 +55,7 @@ def qsf_to_pins(qsf_path: str):
 			pins[pin_name_orig]['misc'][misc_key] = misc_val
 		else:
 			if len(l) > 0:
-				# print(l)
+				print(f'unhandled: {" ".join(l)}')
 				pass
 
 	# post process arrays and subsignals

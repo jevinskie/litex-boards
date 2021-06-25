@@ -48,25 +48,8 @@ _io = [
         IOStandard("2.5 V")
      ),
 
-
-    ("usb_clk", 0, Pins("H11"), IOStandard("3.3-V LVCMOS")),
-    ("usb_wrn", 0, Pins("D14"), IOStandard("3.3-V LVCMOS")),
-    ("usb_sda", 0, Pins("E12"), IOStandard("3.3-V LVCMOS")),
-    ("usb_scl", 0, Pins("J11"), IOStandard("3.3-V LVCMOS")),
-    ("usb_rdn", 0, Pins("D13"), IOStandard("3.3-V LVCMOS")),
-    ("usb_full", 0, Pins("H12"), IOStandard("3.3-V LVCMOS")),
-    ("usb_resetn", 0, Pins("B8"), IOStandard("3.3-V LVCMOS")),
-    ("usb_oen", 0, Pins("A9"), IOStandard("3.3-V LVCMOS")),
-    ("usb_empty", 0, Pins("C17"), IOStandard("3.3-V LVCMOS")),
-    ("ddr3_odt", 0, Pins("W19"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_rasn", 0, Pins("V18"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_resetn", 0, Pins("B22"), IOStandard("1.5V"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_wen", 0, Pins("Y21"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_casn", 0, Pins("U19"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_cke", 0, Pins("W20"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_clk_n", 0, Pins("E18"), IOStandard("DIFFERENTIAL 1.5-V SSTL"), Misc(["OUTPUT_TERMINATION", "SERIES 40 OHM WITHOUT CALIBRATION"]), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_clk_p", 0, Pins("D18"), IOStandard("DIFFERENTIAL 1.5-V SSTL"), Misc(["OUTPUT_TERMINATION", "SERIES 40 OHM WITHOUT CALIBRATION"]), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("ddr3_csn", 0, Pins("Y22"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    # Ethernet
+    # Port 0 (bottom/top?)
     ("eneta_gtx_clk", 0, Pins("T5"), IOStandard("2.5 V")),
     ("eneta_intn", 0, Pins("V7"), IOStandard("2.5 V")),
     ("enet_mdc", 0, Pins("Y6"), IOStandard("2.5 V")),
@@ -81,6 +64,17 @@ _io = [
     ("eneta_tx_en", 0, Pins("R4"), IOStandard("2.5 V")),
     ("eneta_tx_er", 0, Pins("P4"), IOStandard("2.5 V")),
     ("eneta_led_link100", 0, Pins("R9"), IOStandard("2.5 V")),
+
+    ("eneta_rx_d", 0, Pins("N9"), IOStandard("2.5 V")),
+    ("eneta_rx_d", 1, Pins("T1"), IOStandard("2.5 V")),
+    ("eneta_rx_d", 2, Pins("N1"), IOStandard("2.5 V")),
+    ("eneta_rx_d", 3, Pins("T3"), IOStandard("2.5 V")),
+    ("eneta_tx_d", 0, Pins("R5"), IOStandard("2.5 V")),
+    ("eneta_tx_d", 1, Pins("P5"), IOStandard("2.5 V")),
+    ("eneta_tx_d", 2, Pins("W1"), IOStandard("2.5 V")),
+    ("eneta_tx_d", 3, Pins("W2"), IOStandard("2.5 V")),
+
+    # Port 1 (top/bottom?)
     ("enetb_gtx_clk", 0, Pins("T6"), IOStandard("2.5 V")),
     ("enetb_intn", 0, Pins("AA3"), IOStandard("2.5 V")),
     ("enetb_resetn", 0, Pins("AB4"), IOStandard("2.5 V")),
@@ -94,11 +88,45 @@ _io = [
     ("enetb_tx_er", 0, Pins("U5"), IOStandard("2.5 V")),
     ("enetb_led_link100", 0, Pins("P9"), IOStandard("2.5 V")),
 
+    ("enetb_rx_d", 0, Pins("P8"), IOStandard("2.5 V")),
+    ("enetb_rx_d", 1, Pins("M1"), IOStandard("2.5 V")),
+    ("enetb_rx_d", 2, Pins("M2"), IOStandard("2.5 V")),
+    ("enetb_rx_d", 3, Pins("R7"), IOStandard("2.5 V")),
+    ("enetb_tx_d", 0, Pins("U1"), IOStandard("2.5 V")),
+    ("enetb_tx_d", 1, Pins("V1"), IOStandard("2.5 V")),
+    ("enetb_tx_d", 2, Pins("U3"), IOStandard("2.5 V")),
+    ("enetb_tx_d", 3, Pins("U4"), IOStandard("2.5 V")),
+
+
+
+    ("usb_clk", 0, Pins("H11"), IOStandard("3.3-V LVCMOS")),
+    ("usb_wrn", 0, Pins("D14"), IOStandard("3.3-V LVCMOS")),
+    ("usb_sda", 0, Pins("E12"), IOStandard("3.3-V LVCMOS")),
+    ("usb_scl", 0, Pins("J11"), IOStandard("3.3-V LVCMOS")),
+    ("usb_rdn", 0, Pins("D13"), IOStandard("3.3-V LVCMOS")),
+    ("usb_full", 0, Pins("H12"), IOStandard("3.3-V LVCMOS")),
+    ("usb_resetn", 0, Pins("B8"), IOStandard("3.3-V LVCMOS")),
+    ("usb_oen", 0, Pins("A9"), IOStandard("3.3-V LVCMOS")),
+    ("usb_empty", 0, Pins("C17"), IOStandard("3.3-V LVCMOS")),
+
+    ("ddr3_odt", 0, Pins("W19"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_rasn", 0, Pins("V18"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_resetn", 0, Pins("B22"), IOStandard("1.5V"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_wen", 0, Pins("Y21"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_casn", 0, Pins("U19"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_cke", 0, Pins("W20"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_clk_n", 0, Pins("E18"), IOStandard("DIFFERENTIAL 1.5-V SSTL"), Misc(["OUTPUT_TERMINATION", "SERIES 40 OHM WITHOUT CALIBRATION"]), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_clk_p", 0, Pins("D18"), IOStandard("DIFFERENTIAL 1.5-V SSTL"), Misc(["OUTPUT_TERMINATION", "SERIES 40 OHM WITHOUT CALIBRATION"]), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+    ("ddr3_csn", 0, Pins("Y22"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
+
+
+
     ("hsmc_clk_in0", 0, Pins("N4"), IOStandard("2.5 V")),
     ("hsmc_scl", 0, Pins("Y18"), IOStandard("2.5 V")),
     ("hsmc_sda", 0, Pins("AA19"), IOStandard("2.5 V")),
     ("hsmc_clk_out0", 0, Pins("AA13"), IOStandard("2.5 V")),
     ("hsmc_prsntn", 0, Pins("AB14"), IOStandard("2.5 V")),
+
     ("hdmi_scl", 0, Pins("A10"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_sda", 0, Pins("B15"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_tx_clk", 0, Pins("D6"), IOStandard("3.3-V LVCMOS")),
@@ -106,11 +134,18 @@ _io = [
     ("hdmi_tx_hs", 0, Pins("A19"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_tx_int", 0, Pins("D15"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_tx_vs", 0, Pins("J12"), IOStandard("3.3-V LVCMOS")),
+
     ("qspi_clk", 0, Pins("B2"), IOStandard("3.3-V LVCMOS")),
     ("qspi_csn", 0, Pins("C2"), IOStandard("3.3-V LVCMOS")),
+    ("qspi_io", 0, Pins("C6"), IOStandard("3.3-V LVCMOS")),
+    ("qspi_io", 1, Pins("C3"), IOStandard("3.3-V LVCMOS")),
+    ("qspi_io", 2, Pins("C5"), IOStandard("3.3-V LVCMOS")),
+    ("qspi_io", 3, Pins("B1"), IOStandard("3.3-V LVCMOS")),
+
     ("dac_sync", 0, Pins("B10"), IOStandard("3.3-V LVCMOS")),
     ("dac_sclk", 0, Pins("A7"), IOStandard("3.3-V LVCMOS")),
     ("dac_din", 0, Pins("A8"), IOStandard("3.3-V LVCMOS")),
+
     ("ip_sequrity", 0, Pins("E6"), IOStandard("3.3-V LVCMOS")),
     ("jtag_safe", 0, Pins("D7"), IOStandard("3.3-V LVCMOS")),
 
@@ -124,6 +159,7 @@ _io = [
     ("usb_data", 7, Pins("A14"), IOStandard("3.3-V LVCMOS")),
     ("usb_addr", 0, Pins("D17"), IOStandard("3.3-V LVCMOS")),
     ("usb_addr", 1, Pins("E13"), IOStandard("3.3-V LVCMOS")),
+
     ("ddr3_a", 0, Pins("V20"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
     ("ddr3_a", 1, Pins("D19"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
     ("ddr3_a", 2, Pins("A21"), IOStandard("SSTL-15"), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
@@ -174,22 +210,7 @@ _io = [
     ("ddr3_dqs_p", 0, Pins("K14"), IOStandard("DIFFERENTIAL 1.5-V SSTL"), Misc(["OUTPUT_TERMINATION", "SERIES 40 OHM WITHOUT CALIBRATION"]), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
     ("ddr3_dqs_p", 1, Pins("L14"), IOStandard("DIFFERENTIAL 1.5-V SSTL"), Misc(["OUTPUT_TERMINATION", "SERIES 40 OHM WITHOUT CALIBRATION"]), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
     ("ddr3_dqs_p", 2, Pins("R18"), IOStandard("DIFFERENTIAL 1.5-V SSTL"), Misc(["OUTPUT_TERMINATION", "SERIES 40 OHM WITHOUT CALIBRATION"]), Misc(["PACKAGE_SKEW_COMPENSATION", "OFF"])),
-    ("eneta_rx_d", 0, Pins("N9"), IOStandard("2.5 V")),
-    ("eneta_rx_d", 1, Pins("T1"), IOStandard("2.5 V")),
-    ("eneta_rx_d", 2, Pins("N1"), IOStandard("2.5 V")),
-    ("eneta_rx_d", 3, Pins("T3"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 0, Pins("R5"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 1, Pins("P5"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 2, Pins("W1"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 3, Pins("W2"), IOStandard("2.5 V")),
-    ("enetb_rx_d", 0, Pins("P8"), IOStandard("2.5 V")),
-    ("enetb_rx_d", 1, Pins("M1"), IOStandard("2.5 V")),
-    ("enetb_rx_d", 2, Pins("M2"), IOStandard("2.5 V")),
-    ("enetb_rx_d", 3, Pins("R7"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 0, Pins("U1"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 1, Pins("V1"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 2, Pins("U3"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 3, Pins("U4"), IOStandard("2.5 V")),
+
     ("hsmc_clk_in_n", 0, Pins("AB21")),
     ("hsmc_clk_in_n", 1, Pins("V9")),
     ("hsmc_clk_in_p", 0, Pins("AA20"), IOStandard("LVDS")),
@@ -270,6 +291,7 @@ _io = [
     ("hsmc_tx_d_p", 14, Pins("P12"), IOStandard("LVDS")),
     ("hsmc_tx_d_p", 15, Pins("AA12"), IOStandard("LVDS")),
     ("hsmc_tx_d_p", 16, Pins("Y17"), IOStandard("LVDS")),
+
     ("hdmi_tx_d", 0, Pins("A17"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_tx_d", 1, Pins("A18"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_tx_d", 2, Pins("A12"), IOStandard("3.3-V LVCMOS")),
@@ -294,6 +316,7 @@ _io = [
     ("hdmi_tx_d", 21, Pins("B16"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_tx_d", 22, Pins("C16"), IOStandard("3.3-V LVCMOS")),
     ("hdmi_tx_d", 23, Pins("A15"), IOStandard("3.3-V LVCMOS")),
+
     ("pmoda_io", 0, Pins("C7"), IOStandard("3.3-V LVCMOS")),
     ("pmoda_io", 1, Pins("C8"), IOStandard("3.3-V LVCMOS")),
     ("pmoda_io", 2, Pins("A6"), IOStandard("3.3-V LVCMOS")),
@@ -310,10 +333,9 @@ _io = [
     ("pmodb_io", 5, Pins("A3"), IOStandard("3.3-V LVCMOS")),
     ("pmodb_io", 6, Pins("B4"), IOStandard("3.3-V LVCMOS")),
     ("pmodb_io", 7, Pins("B3"), IOStandard("3.3-V LVCMOS")),
-    ("qspi_io", 0, Pins("C6"), IOStandard("3.3-V LVCMOS")),
-    ("qspi_io", 1, Pins("C3"), IOStandard("3.3-V LVCMOS")),
-    ("qspi_io", 2, Pins("C5"), IOStandard("3.3-V LVCMOS")),
-    ("qspi_io", 3, Pins("B1"), IOStandard("3.3-V LVCMOS")),
+
+
+
     ("adc1in", 0, Pins("F5"), IOStandard("2.5 V")),
     ("adc1in", 1, Pins("F4"), IOStandard("2.5 V")),
     ("adc1in", 2, Pins("J8"), IOStandard("2.5 V")),
@@ -350,11 +372,6 @@ class Platform(AlteraPlatform):
 
     def __init__(self):
         AlteraPlatform.__init__(self, "10M50DAF484C6GES", _io, _connectors)
-        # Disable config pin so bank8 can use 1.2V.
-        self.add_platform_command("set_global_assignment -name AUTO_RESTART_CONFIGURATION ON")
-        self.add_platform_command("set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF")
-        self.add_platform_command("set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF")
-        self.add_platform_command("set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE \"SINGLE IMAGE WITH ERAM\"")
 
     def create_programmer(self):
         return USBBlaster(cable_name="Altera MAX 10 Dev kit")
