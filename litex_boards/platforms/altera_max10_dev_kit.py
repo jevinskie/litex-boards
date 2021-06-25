@@ -374,7 +374,7 @@ class Platform(AlteraPlatform):
         AlteraPlatform.__init__(self, "10M50DAF484C6GES", _io, _connectors)
 
     def create_programmer(self):
-        return USBBlaster(cable_name="Altera MAX 10 Dev kit")
+        return USBBlaster(cable_name="USB-BlasterII")
 
     def do_finalize(self, fragment):
         AlteraPlatform.do_finalize(self, fragment)

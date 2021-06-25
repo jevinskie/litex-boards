@@ -38,11 +38,11 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), uart_name="uartbone", uart_baudrate=3_000_000, uart_fifo_depth=512, **kwargs):
+    def __init__(self, sys_clk_freq=int(50e6), **kwargs):
         self.platform = platform = altera_max10_dev_kit.Platform()
 
-        # SoCCore ----------------------------------------------------------------------------------
-        SoCCore.__init__(self, platform, sys_clk_freq,
+        # SoCMini ----------------------------------------------------------------------------------
+        SoCMini.__init__(self, platform, sys_clk_freq,
             ident         = "LiteX SoC on Altera's Max 10 dev kit",
             ident_version = True,
             **kwargs)
@@ -53,6 +53,8 @@ class BaseSoC(SoCCore):
         # JTAGBone
         # self.add_jtagbone() # No Altera JTAG PHY (yet...)
 
+        self.add_uartbone(baudrate=3_000_000)
+
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
             pads         = platform.request_all("user_led"),
@@ -60,18 +62,23 @@ class BaseSoC(SoCCore):
 
 # Build --------------------------------------------------------------------------------------------
 
+def argparse_set_def(parser: argparse.ArgumentParser, dst: str, default):
+    for a in parser._actions:
+        if dst in a.dest:
+            a.default = default
+
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
     parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
     builder_args(parser)
-    soc_core_args(parser)
+    argparse_set_def(parser, 'csr_csv', 'csr.csv')
+
     args = parser.parse_args()
 
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
-        **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))
     builder.build(run=args.build)
