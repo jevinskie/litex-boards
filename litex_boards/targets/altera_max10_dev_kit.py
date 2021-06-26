@@ -16,6 +16,8 @@ from litex.soc.cores.clock import Max10PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
+from litex.soc.cores import uart
+from litex.soc.cores.jtag import JTAGAtlantic
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -37,7 +39,7 @@ class _CRG(Module):
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
-class BaseSoC(SoCCore):
+class BareSoC(SoCCore):
     def __init__(self, sys_clk_freq=int(50e6), **kwargs):
         self.platform = platform = altera_max10_dev_kit.Platform()
 
@@ -60,12 +62,40 @@ class BaseSoC(SoCCore):
             pads         = platform.request_all("user_led"),
             sys_clk_freq = sys_clk_freq)
 
+class BaseSoC(SoCCore):
+    def __init__(self, sys_clk_freq=int(50e6), **kwargs):
+        self.platform = platform = altera_max10_dev_kit.Platform()
+
+        # SoCCore ----------------------------------------------------------------------------------
+        SoCCore.__init__(self, platform, sys_clk_freq,
+            ident         = "LiteX SoC on Altera's Max 10 dev kit",
+            ident_version = True,
+            **kwargs)
+
+        # CRG --------------------------------------------------------------------------------------
+        self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+
+        # UARTbone
+        self.check_if_exists("uartbone")
+        self.submodules.uartbone_phy = JTAGAtlantic()
+        self.submodules.uartbone = uart.UARTBone(phy=self.uartbone_phy, clk_freq=sys_clk_freq)
+        self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
+
+        # Leds -------------------------------------------------------------------------------------
+        self.submodules.leds = LedChaser(
+            pads         = platform.request_all("user_led"),
+            sys_clk_freq = sys_clk_freq)
+
+
 # Build --------------------------------------------------------------------------------------------
 
 def argparse_set_def(parser: argparse.ArgumentParser, dst: str, default):
+    changed = False
     for a in parser._actions:
-        if dst in a.dest:
+        if dst == a.dest:
             a.default = default
+            return
+    raise ValueError(f'dest var {dst} arg not found')
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
@@ -73,12 +103,21 @@ def main():
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
     parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
     builder_args(parser)
+    soc_core_args(parser)
     argparse_set_def(parser, 'csr_csv', 'csr.csv')
+    argparse_set_def(parser, 'uart_baudrate', 3_000_000)
+    # argparse_set_def(parser, 'uart_fifo_depth', 1024)
+    argparse_set_def(parser, 'csr_csv', 'csr.csv')
+    argparse_set_def(parser, 'cpu_variant', 'minimal')
 
     args = parser.parse_args()
 
+    # soc = BareSoC(
+    #     sys_clk_freq             = int(float(args.sys_clk_freq)),
+    # )
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
+        **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))
     builder.build(run=args.build)
