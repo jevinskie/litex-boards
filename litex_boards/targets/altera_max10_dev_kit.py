@@ -77,9 +77,10 @@ class BaseSoC(SoCCore):
 
         # UARTbone
         self.check_if_exists("uartbone")
-        self.submodules.uartbone_phy = JTAGAtlantic()
+        self.submodules.uartbone_phy = uart.UARTPHY(self.platform.request("serial"), sys_clk_freq, 3_000_000)
         self.submodules.uartbone = uart.UARTBone(phy=self.uartbone_phy, clk_freq=sys_clk_freq)
         self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
+        # self.add_uartbone(baudrate=3_000_000)
 
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
@@ -109,6 +110,7 @@ def main():
     # argparse_set_def(parser, 'uart_fifo_depth', 1024)
     argparse_set_def(parser, 'csr_csv', 'csr.csv')
     argparse_set_def(parser, 'cpu_variant', 'minimal')
+    argparse_set_def(parser, 'uart_name', 'jtag_atlantic')
 
     args = parser.parse_args()
 
