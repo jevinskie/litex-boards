@@ -48,56 +48,57 @@ _io = [
         IOStandard("2.5 V")
      ),
 
-    # Ethernet
+    # RGMII Ethernet running at 100 mbit
     # Port 0 (bottom/top?)
+    ("eth_clocks", 0,
+        Subsignal("tx", Pins("E10")),
+        Subsignal("rx", Pins("P3")),
+        IOStandard("2.5 V")
+     ),
+    ("eth", 0,
+         Subsignal("rst_n", Pins("V8")),
+         Subsignal("mdio", Pins("Y5")),
+         Subsignal("mdc", Pins("Y6")),
+         Subsignal("rx_dv", Pins("T2")),
+         Subsignal("rx_er", Pins("U2")),
+         Subsignal("rx_data", Pins("N9 T1 N1 T3")),
+         Subsignal("tx_en", Pins("R4")),
+         Subsignal("tx_er", Pins("P4")),
+         Subsignal("tx_data", Pins("R5 P5 W1 W2")),
+         Subsignal("col", Pins("P1")),
+         Subsignal("crs", Pins("N8")),
+         IOStandard("2.5 V")
+    ),
+
+    # Port 1 (top/bottom?)
+    ("eth_clocks", 1,
+        Subsignal("tx", Pins("C20")),
+        Subsignal("rx", Pins("J19")),
+        IOStandard("2.5 V")
+     ),
+    ("eth", 1,
+        Subsignal("rst_n", Pins("AB4")),
+        Subsignal("rx_dv", Pins("R1")),
+        Subsignal("rx_er", Pins("R2")),
+        Subsignal("rx_data", Pins("P8 M1 M2 R7")),
+        Subsignal("tx_en", Pins("V3")),
+        Subsignal("tx_er", Pins("U5")),
+        Subsignal("tx_data", Pins("U1 V1 U3 U4")),
+        Subsignal("col", Pins("N2")),
+        Subsignal("crs", Pins("N3")),
+        IOStandard("2.5 V")
+    ),
+
+
+    # Port 0 (top/bottom?)
     ("eneta_gtx_clk", 0, Pins("T5"), IOStandard("2.5 V")),
     ("eneta_intn", 0, Pins("V7"), IOStandard("2.5 V")),
-    ("enet_mdc", 0, Pins("Y6"), IOStandard("2.5 V")),
-    ("enet_mdio", 0, Pins("Y5"), IOStandard("2.5 V")),
-    ("eneta_resetn", 0, Pins("V8"), IOStandard("2.5 V")),
-    ("eneta_rx_clk", 0, Pins("P3"), IOStandard("2.5 V")),
-    ("eneta_rx_col", 0, Pins("P1"), IOStandard("2.5 V")),
-    ("eneta_rx_crs", 0, Pins("N8"), IOStandard("2.5 V")),
-    ("eneta_rx_dv", 0, Pins("T2"), IOStandard("2.5 V")),
-    ("eneta_rx_er", 0, Pins("U2"), IOStandard("2.5 V")),
-    ("eneta_tx_clk", 0, Pins("E10"), IOStandard("3.3-V LVCMOS")),
-    ("eneta_tx_en", 0, Pins("R4"), IOStandard("2.5 V")),
-    ("eneta_tx_er", 0, Pins("P4"), IOStandard("2.5 V")),
     ("eneta_led_link100", 0, Pins("R9"), IOStandard("2.5 V")),
-
-    ("eneta_rx_d", 0, Pins("N9"), IOStandard("2.5 V")),
-    ("eneta_rx_d", 1, Pins("T1"), IOStandard("2.5 V")),
-    ("eneta_rx_d", 2, Pins("N1"), IOStandard("2.5 V")),
-    ("eneta_rx_d", 3, Pins("T3"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 0, Pins("R5"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 1, Pins("P5"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 2, Pins("W1"), IOStandard("2.5 V")),
-    ("eneta_tx_d", 3, Pins("W2"), IOStandard("2.5 V")),
 
     # Port 1 (top/bottom?)
     ("enetb_gtx_clk", 0, Pins("T6"), IOStandard("2.5 V")),
     ("enetb_intn", 0, Pins("AA3"), IOStandard("2.5 V")),
-    ("enetb_resetn", 0, Pins("AB4"), IOStandard("2.5 V")),
-    ("enetb_rx_clk", 0, Pins("R3"), IOStandard("2.5 V")),
-    ("enetb_rx_col", 0, Pins("N2"), IOStandard("2.5 V")),
-    ("enetb_rx_crs", 0, Pins("N3"), IOStandard("2.5 V")),
-    ("enetb_rx_dv", 0, Pins("R1"), IOStandard("2.5 V")),
-    ("enetb_rx_er", 0, Pins("R2"), IOStandard("2.5 V")),
-    ("enetb_tx_clk", 0, Pins("E11"), IOStandard("3.3-V LVCMOS")),
-    ("enetb_tx_en", 0, Pins("V3"), IOStandard("2.5 V")),
-    ("enetb_tx_er", 0, Pins("U5"), IOStandard("2.5 V")),
     ("enetb_led_link100", 0, Pins("P9"), IOStandard("2.5 V")),
-
-    ("enetb_rx_d", 0, Pins("P8"), IOStandard("2.5 V")),
-    ("enetb_rx_d", 1, Pins("M1"), IOStandard("2.5 V")),
-    ("enetb_rx_d", 2, Pins("M2"), IOStandard("2.5 V")),
-    ("enetb_rx_d", 3, Pins("R7"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 0, Pins("U1"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 1, Pins("V1"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 2, Pins("U3"), IOStandard("2.5 V")),
-    ("enetb_tx_d", 3, Pins("U4"), IOStandard("2.5 V")),
-
-
 
     ("usb_clk", 0, Pins("H11"), IOStandard("3.3-V LVCMOS")),
     ("usb_wrn", 0, Pins("D14"), IOStandard("3.3-V LVCMOS")),
