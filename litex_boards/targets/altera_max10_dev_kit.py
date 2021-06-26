@@ -109,6 +109,7 @@ def main():
     argparse_set_def(parser, 'uart_baudrate', 3_000_000)
     # argparse_set_def(parser, 'uart_fifo_depth', 1024)
     argparse_set_def(parser, 'csr_csv', 'csr.csv')
+    argparse_set_def(parser, 'cpu_type', 'minerva')
     argparse_set_def(parser, 'cpu_variant', 'minimal')
     argparse_set_def(parser, 'uart_name', 'jtag_atlantic')
 
