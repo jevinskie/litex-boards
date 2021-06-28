@@ -63,7 +63,7 @@ class BareSoC(SoCCore):
             sys_clk_freq = sys_clk_freq)
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), **kwargs):
+    def __init__(self, sys_clk_freq=int(50e6), with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
         self.platform = platform = altera_max10_dev_kit.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -81,6 +81,16 @@ class BaseSoC(SoCCore):
         self.submodules.uartbone = uart.UARTBone(phy=self.uartbone_phy, clk_freq=sys_clk_freq)
         self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
         # self.add_uartbone(baudrate=3_000_000)
+
+        # Ethernet
+        if with_ethernet or with_etherbone:
+            self.submodules.ethphy = LiteEthPHYMII(
+                clock_pads = self.platform.request("eth_clocks"),
+                pads       = self.platform.request("eth"))
+            if with_ethernet:
+                self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
+            if with_etherbone:
+                self.add_etherbone(phy=self.ethphy, ip_address=eth_ip)
 
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
@@ -102,24 +112,36 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",        default=75e6,        help="System clock frequency (default: 50MHz)")
+    ethopts = parser.add_mutually_exclusive_group()
+    ethopts.add_argument("--with-ethernet",      action="store_true",              help="Enable Ethernet support")
+    ethopts.add_argument("--with-etherbone",     action="store_true",              help="Enable Etherbone support")
+    parser.add_argument("--eth-ip",              default="192.168.100.50", type=str, help="Ethernet/Etherbone IP address")
+    parser.add_argument("--eth-dynamic-ip",      action="store_true",              help="Enable dynamic Ethernet IP addresses setting")
+
     builder_args(parser)
     soc_core_args(parser)
     argparse_set_def(parser, 'csr_csv', 'csr.csv')
     argparse_set_def(parser, 'uart_baudrate', 3_000_000)
     # argparse_set_def(parser, 'uart_fifo_depth', 1024)
     argparse_set_def(parser, 'csr_csv', 'csr.csv')
-    argparse_set_def(parser, 'cpu_type', 'minerva')
+    # argparse_set_def(parser, 'cpu_type', 'picorv32')
     argparse_set_def(parser, 'cpu_variant', 'minimal')
     argparse_set_def(parser, 'uart_name', 'jtag_atlantic')
 
     args = parser.parse_args()
+
+    assert not (args.with_etherbone and args.eth_dynamic_ip)
 
     # soc = BareSoC(
     #     sys_clk_freq             = int(float(args.sys_clk_freq)),
     # )
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
+        with_ethernet=args.with_ethernet,
+        with_etherbone=args.with_etherbone,
+        eth_ip=args.eth_ip,
+        eth_dynamic_ip=args.eth_dynamic_ip,
         **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))
