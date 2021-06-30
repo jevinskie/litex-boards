@@ -26,9 +26,6 @@ class _CRG(Module):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
 
-        self.platform = platform
-        self.sys_clk_freq = sys_clk_freq
-
         # # #
 
         # Clk / Rst.
@@ -39,9 +36,6 @@ class _CRG(Module):
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
-
-    def do_finalize(self):
-        self.platform.add_period_constraint(self.cd_sys.clk, 1e9/self.sys_clk_freq)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
