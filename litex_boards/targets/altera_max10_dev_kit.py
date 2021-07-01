@@ -19,6 +19,8 @@ from litex.soc.cores.led import LedChaser
 from litex.soc.cores import uart
 from litex.soc.cores.jtag import JTAGAtlantic
 
+from liteeth.phy.mii import LiteEthPHYMII
+
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
