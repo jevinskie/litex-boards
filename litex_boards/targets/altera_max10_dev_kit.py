@@ -42,7 +42,8 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BareSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), **kwargs):
+    def __init__(self, platform, clk_freq, sys_clk_freq=int(50e6), **kwargs):
+        super().__init__(platform, clk_freq, **kwargs)
         self.platform = platform = altera_max10_dev_kit.Platform()
 
         # SoCMini ----------------------------------------------------------------------------------
@@ -86,8 +87,9 @@ class BaseSoC(SoCCore):
         # self.submodules.uartbone_phy = uart.UARTPHY(self.platform.request("serial"), sys_clk_freq, 3_000_000)
         # self.submodules.uartbone = uart.UARTBone(phy=self.uartbone_phy, clk_freq=sys_clk_freq)
         # self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
+        # self.add_uartbone(baudrate=3_000_000)
         if with_uartbone:
-            self.add_uartbone(baudrate=3_000_000)
+            self.add_uartbone()
 
         # Ethernet
         if with_ethernet or with_etherbone:
