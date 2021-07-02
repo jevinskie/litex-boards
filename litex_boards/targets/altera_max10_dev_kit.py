@@ -65,7 +65,7 @@ class BareSoC(SoCCore):
             sys_clk_freq = sys_clk_freq)
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
+    def __init__(self, sys_clk_freq=50e6, with_jtagbone=True, with_uartbone=False, with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
         self.platform = platform = altera_max10_dev_kit.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -77,12 +77,17 @@ class BaseSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
 
+        # Jtagbone ---------------------------------------------------------------------------------
+        if with_jtagbone:
+            self.add_jtagbone()
+
         # UARTbone
-        self.check_if_exists("uartbone")
-        self.submodules.uartbone_phy = uart.UARTPHY(self.platform.request("serial"), sys_clk_freq, 3_000_000)
-        self.submodules.uartbone = uart.UARTBone(phy=self.uartbone_phy, clk_freq=sys_clk_freq)
-        self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
-        # self.add_uartbone(baudrate=3_000_000)
+        # self.check_if_exists("uartbone")
+        # self.submodules.uartbone_phy = uart.UARTPHY(self.platform.request("serial"), sys_clk_freq, 3_000_000)
+        # self.submodules.uartbone = uart.UARTBone(phy=self.uartbone_phy, clk_freq=sys_clk_freq)
+        # self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
+        if with_uartbone:
+            self.add_uartbone(baudrate=3_000_000)
 
         # Ethernet
         if with_ethernet or with_etherbone:
@@ -114,7 +119,8 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=75e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--with-jtagbone",       action="store_true",              help="Enable Jtagbone support")
     ethopts = parser.add_mutually_exclusive_group()
     ethopts.add_argument("--with-ethernet",      action="store_true",              help="Enable Ethernet support")
     ethopts.add_argument("--with-etherbone",     action="store_true",              help="Enable Etherbone support")
@@ -126,10 +132,9 @@ def main():
     argparse_set_def(parser, 'csr_csv', 'csr.csv')
     argparse_set_def(parser, 'uart_baudrate', 3_000_000)
     # argparse_set_def(parser, 'uart_fifo_depth', 1024)
-    argparse_set_def(parser, 'csr_csv', 'csr.csv')
-    argparse_set_def(parser, 'cpu_type', 'picorv32')
-    argparse_set_def(parser, 'cpu_variant', 'minimal')
-    argparse_set_def(parser, 'uart_name', 'jtag_atlantic')
+    # argparse_set_def(parser, 'cpu_type', 'picorv32')
+    # argparse_set_def(parser, 'cpu_variant', 'minimal')
+    # argparse_set_def(parser, 'uart_name', 'jtag_atlantic')
 
     args = parser.parse_args()
 
