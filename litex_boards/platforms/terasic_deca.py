@@ -191,7 +191,7 @@ _io = [
         Subsignal("tx_data", Pins("U2 W1 N9 W2")),
         Subsignal("col",     Pins("R4")),
         Subsignal("crs",     Pins("P5")),
-        Subsignal("pcf_en",  Pins("V9"), IOStandard("3.3 V")),
+        Subsignal("pcf_en",  Pins("V9"), IOStandard("3.3-V LVTTL")),
         IOStandard("2.5 V"),
     ),
 

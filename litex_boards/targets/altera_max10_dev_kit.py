@@ -66,7 +66,7 @@ class BareSoC(SoCCore):
             sys_clk_freq = sys_clk_freq)
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=50e6, with_jtagbone=True, with_uartbone=False, with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
+    def __init__(self, sys_clk_freq=50e6, with_jtagbone=False, with_uartbone=False, with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
         self.platform = platform = altera_max10_dev_kit.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -123,6 +123,7 @@ def main():
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
     parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable Jtagbone support")
+    parser.add_argument("--with-uartbone",       action="store_true", help="Enable Jtagbone support")
     ethopts = parser.add_mutually_exclusive_group()
     ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable Ethernet support")
     ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
@@ -147,8 +148,9 @@ def main():
     # )
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
+        with_uartbone=args.with_uartbone,
         with_ethernet=args.with_ethernet,
-        with_etherbone=args.with_etherbone,
+        with_jtagbone=args.with_jtagbone,
         eth_ip=args.eth_ip,
         eth_dynamic_ip=args.eth_dynamic_ip,
         **soc_core_argdict(args)
