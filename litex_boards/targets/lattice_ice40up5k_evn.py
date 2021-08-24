@@ -21,7 +21,6 @@ from litex_boards.platforms import lattice_ice40up5k_evn
 from litex.build.lattice.programmer import IceStormProgrammer
 
 from litex.soc.cores.ram import Up5kSPRAM
-from litex.soc.cores.spi_flash import SpiFlash
 from litex.soc.cores.clock import iCE40PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.soc import SoCRegion
@@ -63,7 +62,7 @@ class _CRG(Module):
 
 class BaseSoC(SoCCore):
     mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
-    def __init__(self, bios_flash_offset, sys_clk_freq=int(12e6), **kwargs):
+    def __init__(self, bios_flash_offset, sys_clk_freq=int(12e6), with_led_chaser=True, **kwargs):
         platform = lattice_ice40up5k_evn.Platform()
 
         # Disable Integrated ROM/SRAM since too large for iCE40 and UP5K has specific SPRAM.
@@ -87,8 +86,10 @@ class BaseSoC(SoCCore):
         self.bus.add_slave("sram", self.spram.bus, SoCRegion(size=128*kB))
 
         # SPI Flash --------------------------------------------------------------------------------
-        self.add_spi_flash(mode="1x", dummy_cycles=8) 
         # 4x mode is not possible on this board since WP and HOLD pins are not connected to the FPGA
+        from litespi.modules import N25Q032A
+        from litespi.opcodes import SpiNorFlashOpCodes as Codes
+        self.add_spi_flash(mode="1x", module=N25Q032A(Codes.READ_1_1_1))
 
         # Add ROM linker region --------------------------------------------------------------------
         self.bus.add_region("rom", SoCRegion(
@@ -98,9 +99,10 @@ class BaseSoC(SoCCore):
         )
 
         # Leds -------------------------------------------------------------------------------------
-        self.submodules.leds = LedChaser(
-            pads         = platform.request_all("user_led_n"),
-            sys_clk_freq = sys_clk_freq)
+        if with_led_chaser:
+            self.submodules.leds = LedChaser(
+                pads         = platform.request_all("user_led_n"),
+                sys_clk_freq = sys_clk_freq)
 
         # Add a UART-Wishbone bridge -----------------------------------------
         debug_uart=False

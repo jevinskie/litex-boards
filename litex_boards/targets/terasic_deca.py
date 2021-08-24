@@ -54,7 +54,7 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), with_video_terminal=False, with_uartbone=False, with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
+    def __init__(self, sys_clk_freq=int(50e6), with_led_chaser=True, with_video_terminal=False, with_uartbone=False, with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
         self.platform = platform = deca.Platform()
 
         # Defaults to JTAG-UART since no hardware UART.
@@ -90,9 +90,10 @@ class BaseSoC(SoCCore):
                 self.add_etherbone(phy=self.ethphy, ip_address=eth_ip)
 
         # Leds -------------------------------------------------------------------------------------
-        self.submodules.leds = LedChaser(
-            pads         = platform.request_all("user_led"),
-            sys_clk_freq = sys_clk_freq)
+        if with_led_chaser:
+            self.submodules.leds = LedChaser(
+                pads         = platform.request_all("user_led"),
+                sys_clk_freq = sys_clk_freq)
 
 # Build --------------------------------------------------------------------------------------------
 

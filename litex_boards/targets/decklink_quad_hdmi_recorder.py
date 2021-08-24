@@ -6,6 +6,13 @@
 # Copyright (c) 2021 Florent Kermarrec <florent@enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
+# Build/Load bitstream:
+# ./decklink_quad_hdmi_recorder.py --csr-csv=csr.csv --build --load
+#
+# Use:
+# litex_server --jtag --jtag-config=openocd_xc7_ft232.cfg
+# litex_term bridge
+
 import os
 import argparse
 
@@ -17,6 +24,10 @@ from litex.soc.cores.clock import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
+from litedram.common import PHYPadsReducer
+from litedram.modules import MT41J256M16
+from litedram.phy import usddrphy
+
 from litepcie.phy.uspciephy import USPCIEPHY
 from litepcie.software import generate_litepcie_software
 
@@ -24,15 +35,26 @@ from litepcie.software import generate_litepcie_software
 
 class _CRG(Module):
     def __init__(self, platform, sys_clk_freq):
-        self.clock_domains.cd_sys = ClockDomain()
+        self.clock_domains.cd_sys    = ClockDomain()
+        self.clock_domains.cd_sys4x  = ClockDomain(reset_less=True)
+        self.clock_domains.cd_pll4x  = ClockDomain(reset_less=True)
+        self.clock_domains.cd_idelay = ClockDomain()
 
         # # #
 
         self.submodules.pll = pll = USMMCM(speedgrade=-2)
-        self.comb += pll.reset.eq(ResetSignal("pcie"))
-        pll.register_clkin(ClockSignal("pcie"), 250e6)
-        pll.create_clkout(self.cd_sys, sys_clk_freq)
+        pll.register_clkin(platform.request("clk200"), 200e6)
+        pll.create_clkout(self.cd_pll4x, sys_clk_freq*4, buf=None, with_reset=False)
+        pll.create_clkout(self.cd_idelay, 200e6)
         platform.add_false_path_constraints(self.cd_sys.clk, pll.clkin) # Ignore sys_clk to pll.clkin path created by SoC's rst.
+        self.specials += [
+            Instance("BUFGCE_DIV", name="main_bufgce_div",
+                p_BUFGCE_DIVIDE=4,
+                i_CE=1, i_I=self.cd_pll4x.clk, o_O=self.cd_sys.clk),
+            Instance("BUFGCE", name="main_bufgce",
+                i_CE=1, i_I=self.cd_pll4x.clk, o_O=self.cd_sys4x.clk),
+        ]
+        self.submodules.idelayctrl = USIDELAYCTRL(cd_ref=self.cd_idelay, cd_sys=self.cd_sys)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -50,6 +72,22 @@ class BaseSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq)
 
+        # JTAGBone  --------------------------------------------------------------------------------
+        self.add_jtagbone()
+
+        # DDR3 SDRAM -------------------------------------------------------------------------------
+        if not self.integrated_main_ram_size:
+            self.submodules.ddrphy = usddrphy.USDDRPHY(
+                pads             = PHYPadsReducer(platform.request("ddram"), [0, 1, 2, 3]),
+                memtype          = "DDR3",
+                sys_clk_freq     = sys_clk_freq,
+                iodelay_clk_freq = 200e6)
+            self.add_sdram("sdram",
+                phy           = self.ddrphy,
+                module        = MT41J256M16(sys_clk_freq, "1:4"),
+                l2_cache_size = kwargs.get("l2_size", 8192)
+            )
+
         # PCIe -------------------------------------------------------------------------------------
         if with_pcie:
             self.submodules.pcie_phy = USPCIEPHY(platform, platform.request("pcie_x4"),
@@ -57,9 +95,9 @@ class BaseSoC(SoCCore):
                 data_width = 128,
                 bar0_size  = 0x20000)
             self.add_pcie(phy=self.pcie_phy, ndmas=1)
-        # False Paths (FIXME: Improve integration).
-        platform.toolchain.pre_placement_commands.append("set_false_path -from [get_clocks main_clkout_1] -to [get_clocks pcie_clk_1]")
-        platform.toolchain.pre_placement_commands.append("set_false_path -from [get_clocks pcie_clk_1] -to [get_clocks main_clkout_1]")
+            # False Paths (FIXME: Improve integration).
+            platform.toolchain.pre_placement_commands.append("set_false_path -from [get_clocks sys_clk] -to [get_clocks pcie_clk_1]")
+            platform.toolchain.pre_placement_commands.append("set_false_path -from [get_clocks pcie_clk_1] -to [get_clocks sys_clk]")
 
 # Build --------------------------------------------------------------------------------------------
 

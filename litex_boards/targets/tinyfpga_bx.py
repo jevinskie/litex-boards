@@ -16,7 +16,6 @@ from litex.build.io import CRG
 
 from litex_boards.platforms import tinyfpga_bx
 
-from litex.soc.cores.spi_flash import SpiFlash
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.builder import *
@@ -29,7 +28,7 @@ mB = 1024*kB
 
 class BaseSoC(SoCCore):
     mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
-    def __init__(self, bios_flash_offset, sys_clk_freq=int(16e6), **kwargs):
+    def __init__(self, bios_flash_offset, sys_clk_freq=int(16e6), with_led_chaser=True, **kwargs):
         platform = tinyfpga_bx.Platform()
 
         # Disable Integrated ROM since too large for iCE40.
@@ -48,7 +47,9 @@ class BaseSoC(SoCCore):
         self.submodules.crg = CRG(platform.request("clk16"))
 
         # SPI Flash --------------------------------------------------------------------------------
-        self.add_spi_flash(mode="1x", dummy_cycles=8)
+        from litespi.modules import AT25SF081
+        from litespi.opcodes import SpiNorFlashOpCodes as Codes
+        self.add_spi_flash(mode="1x", module=AT25SF081(Codes.READ_1_1_1), with_master=False)
 
         # Add ROM linker region --------------------------------------------------------------------
         self.bus.add_region("rom", SoCRegion(
@@ -58,9 +59,10 @@ class BaseSoC(SoCCore):
         )
 
         # Leds -------------------------------------------------------------------------------------
-        self.submodules.leds = LedChaser(
-            pads         = platform.request_all("user_led"),
-            sys_clk_freq = sys_clk_freq)
+        if with_led_chaser:
+            self.submodules.leds = LedChaser(
+                pads         = platform.request_all("user_led"),
+                sys_clk_freq = sys_clk_freq)
 
 # Build --------------------------------------------------------------------------------------------
 

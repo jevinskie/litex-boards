@@ -6,6 +6,8 @@
 # Copyright (c) 2021 Florent Kermarrec <florent@enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
+# Work-In-Progress...
+
 import os
 import argparse
 
@@ -75,7 +77,7 @@ def main():
 
     soc = BaseSoC(
         sys_clk_freq = int(float(args.sys_clk_freq)),
-        with_pcie    = args.with_pcie,
+        with_pcie    = args.with_pcie | True, # FIXME: Always enable PCIe for now.
         **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))

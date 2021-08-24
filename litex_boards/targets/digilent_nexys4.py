@@ -3,27 +3,31 @@
 #
 # This file is part of LiteX-Boards.
 #
-# Copyright (c) 2018-2019 Florent Kermarrec <florent@enjoy-digital.fr>
+# Copyright (c) 2021 Michael T. Mayers <michael@tweakoz.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
 import os
+import sys
 import argparse
+import math
 
 from migen import *
 
-from litex_boards.platforms import nexys4ddr
+from litex.build.io import CRG
+
+from litex_boards.platforms import digilent_nexys4
 
 from litex.soc.cores.clock import *
-from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.soc_core import *
+from litex.soc.integration.soc import SoCRegion
 from litex.soc.integration.builder import *
-from litex.soc.cores.video import VideoVGAPHY
 from litex.soc.cores.led import LedChaser
+from litex.soc.interconnect import wishbone
 
-from litedram.modules import MT47H64M16
-from litedram.phy import s7ddrphy
-
+from litex.soc.integration.soc import colorer
+from litex.soc.cores.video import VideoVGAPHY
 from liteeth.phy.rmii import LiteEthPHYRMII
+
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -51,34 +55,131 @@ class _CRG(Module):
 
         self.submodules.idelayctrl = S7IDELAYCTRL(self.cd_idelay)
 
+# CellularRAM (https://media.digikey.com/PDF/Data%20Sheets/Micron%20Technology%20Inc%20PDFs/MT45W8MW16BGX.pdf)
+
+class CellularRAM(Module):
+    def __init__(self, soc, platform):
+
+        sys_clk_freq = soc.sys_clk_freq
+
+        addr_width = 23
+        data_width = 16
+
+        delay_for_70ns = (70e-9) / (1.0/sys_clk_freq)
+        delay_for_70ns = int(math.ceil(delay_for_70ns))+1
+
+        #print("sys_clk_freq<%g> delay_for_70ns<%g>\n"%(sys_clk_freq,delay_for_70ns))
+
+        self.bus = wishbone.Interface(data_width=data_width,adr_width=addr_width)
+
+        self.delaycounter = Signal(5)
+
+        cellram = platform.request("cellularram")
+        addr = cellram.addr
+        data = cellram.data
+        wen = cellram.wen
+        oen = cellram.oen
+        cen = cellram.cen
+        clk = cellram.clk
+        cre = cellram.cre
+        adv = cellram.adv # address valid (low)
+        lb = cellram.lb
+        ub = cellram.ub
+        ########################
+        tristate_data = TSTriple(data_width)
+        self.specials += tristate_data.get_tristate(data)
+        ########################
+        i_rst = ResetSignal("sys")
+        fsm = FSM(reset_state="RESET")
+        fsm = ResetInserter()(fsm)
+        self.submodules.fsm = fsm
+        self.sync += fsm.reset.eq(i_rst)
+        ########################
+        fsm.act("RESET",
+            NextState("INIT"))
+        ########################
+        fsm.act("INIT",
+            NextValue(self.delaycounter,0),
+            NextValue(self.bus.ack,0),
+            NextValue(cen,1),
+            NextValue(adv,1),
+            NextValue(lb,1),
+            NextValue(ub,1),
+            NextValue(clk,0),
+            NextValue(cre,0),
+            NextValue(tristate_data.oe,0),
+            NextState("IDLE"))
+        ########################
+        fsm.act("IDLE",
+            If(self.bus.stb & self.bus.cyc,
+
+                NextValue(lb,~self.bus.sel[0]), 
+                NextValue(ub,~self.bus.sel[1]),
+
+                NextValue(self.delaycounter,0),
+                NextValue(cen,0),
+                NextValue(adv,0),
+                NextValue(addr,self.bus.adr[:addr_width]),
+                If(self.bus.we,
+                    NextValue(wen,0),
+                    NextValue(oen,1),
+                    NextValue(tristate_data.oe,1),
+                    NextValue(tristate_data.o,self.bus.dat_w[:data_width]),
+                    NextState("WRITE")
+                ).Else(
+                    NextValue(wen,1),
+                    NextValue(oen,0),
+                    NextValue(tristate_data.oe,0),
+                    NextState("READ")
+                )
+            )
+        )
+        ########################
+        fsm.act("WRITE",
+            NextValue(self.delaycounter,self.delaycounter+1),
+            If(self.delaycounter==delay_for_70ns,
+                NextValue(self.bus.ack,1),
+                NextState("INIT"))
+        )
+        ########################
+        fsm.act("READ",
+            NextValue(self.delaycounter,self.delaycounter+1),
+            NextValue(self.bus.dat_r,tristate_data.i[:data_width]),
+            If(self.delaycounter==delay_for_70ns,
+                NextValue(self.bus.ack,1),
+                NextState("INIT"))
+        )
+        ########################
+
+def addCellularRAM(soc, platform, name, origin):
+    size = 16*1024*1024
+    ram_bus = wishbone.Interface(data_width=soc.bus.data_width)
+    ram     = CellularRAM(soc,platform)
+    soc.bus.add_slave(name, ram.bus, SoCRegion(origin=origin, size=size, mode="rw"))
+    soc.check_if_exists(name)
+    soc.logger.info("CELLULARRAM {} {} {}.".format(
+        colorer(name),
+        colorer("added", color="green"),
+        soc.bus.regions[name]))
+    setattr(soc.submodules, name, ram)
+
+
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(75e6), with_ethernet=False, with_etherbone=False,
-                 with_led_chaser=True, with_video_terminal=False, with_video_framebuffer=False,
-                 **kwargs):
-        platform = nexys4ddr.Platform()
+    def __init__(self, sys_clk_freq=int(75e6), with_led_chaser=True, with_ethernet=False, with_etherbone=False, with_video_terminal=False, with_video_framebuffer=False, **kwargs):
+        platform = digilent_nexys4.Platform()
 
         # SoCCore ----------------------------------_-----------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Nexys4DDR",
-            ident_version  = True,
+            ident          = "LiteX SoC on Nexys4",
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq)
 
-        # DDR2 SDRAM -------------------------------------------------------------------------------
-        if not self.integrated_main_ram_size:
-            self.submodules.ddrphy = s7ddrphy.A7DDRPHY(platform.request("ddram"),
-                memtype      = "DDR2",
-                nphases      = 2,
-                sys_clk_freq = sys_clk_freq)
-            self.add_sdram("sdram",
-                phy           = self.ddrphy,
-                module        = MT47H64M16(sys_clk_freq, "1:2"),
-                l2_cache_size = kwargs.get("l2_size", 8192)
-            )
+        # Cellular RAM -------------------------------------------------------------------------------
+        addCellularRAM(self,platform,"main_ram",0x40000000)        
 
         # Ethernet / Etherbone ---------------------------------------------------------------------
         if with_ethernet or with_etherbone:
@@ -107,7 +208,7 @@ class BaseSoC(SoCCore):
 # Build --------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="LiteX SoC on Nexys4DDR")
+    parser = argparse.ArgumentParser(description="LiteX SoC on Nexys4")
     parser.add_argument("--build",                  action="store_true", help="Build bitstream")
     parser.add_argument("--load",                   action="store_true", help="Load bitstream")
     parser.add_argument("--sys-clk-freq",           default=75e6,        help="System clock frequency (default: 75MHz)")
