@@ -22,6 +22,7 @@ vendors = [
     "muselab",
     "numato",
     "qmtech",
+    "quertyembedded",
     "radiona",
     "rhsresearchllc",
     "saanlima",
@@ -30,6 +31,7 @@ vendors = [
     "sqrl",
     "terasic",
     "trenz",
+    "tul",
     "xilinx",
 ]
 
