@@ -89,7 +89,7 @@ class BaseSoC(SoCCore):
         # self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
         # self.add_uartbone(baudrate=3_000_000)
         if with_uartbone:
-            self.add_uartbone()
+            self.add_uartbone(baudrate=3_000_000)
 
         # Ethernet
         if with_ethernet or with_etherbone:
