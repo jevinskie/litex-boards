@@ -56,14 +56,14 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6),
+    def __init__(self, sys_clk_freq=int(100e6),
                  with_led_chaser     = True,
                  with_video_terminal = False,
                  with_jtagbone       = False,
                  with_uartbone       = False,
                  with_ethernet       = False,
                  with_etherbone      = False,
-                 eth_ip              = "192.168.42.50",
+                 eth_ip              = "192.168.43.50",
                  eth_dynamic_ip      = False,
                  with_analyzer       = False,
                  **kwargs):
@@ -97,9 +97,11 @@ class BaseSoC(SoCCore):
 
         # Ethernet
         if with_ethernet or with_etherbone:
+            eth_clock_pads = self.platform.request("eth_clocks")
+            eth_pads = self.platform.request("eth")
             self.submodules.ethphy = LiteEthPHYMII(
-                clock_pads = self.platform.request("eth_clocks"),
-                pads       = self.platform.request("eth"))
+                clock_pads = eth_clock_pads,
+                pads       = eth_pads)
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
@@ -107,29 +109,17 @@ class BaseSoC(SoCCore):
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
-            analyzer_signals = [
-                # IBus (could also just added as self.cpu.ibus)
-                self.cpu.ibus.stb,
-                self.cpu.ibus.cyc,
-                self.cpu.ibus.adr,
-                self.cpu.ibus.we,
-                self.cpu.ibus.ack,
-                self.cpu.ibus.sel,
-                self.cpu.ibus.dat_w,
-                self.cpu.ibus.dat_r,
-                # DBus (could also just added as self.cpu.dbus)
-                self.cpu.dbus.stb,
-                self.cpu.dbus.cyc,
-                self.cpu.dbus.adr,
-                self.cpu.dbus.we,
-                self.cpu.dbus.ack,
-                self.cpu.dbus.sel,
-                self.cpu.dbus.dat_w,
-                self.cpu.dbus.dat_r,
-            ]
+            analyzer_signals = list(set([
+                # *self.ethphy._signals_recursive,
+                # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
+                *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
+                # eth_clock_pads,
+                eth_pads
+            ]))
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                 depth        = 512,
                 clock_domain = "sys",
+                register     = True,
                 csr_csv      = "analyzer.csv")
 
         # Leds -------------------------------------------------------------------------------------
@@ -152,7 +142,7 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",        default=100e6,        help="System clock frequency (default: 50MHz)")
     parser.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA)")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable JTAGbone support")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable UARTbone support")
@@ -160,7 +150,7 @@ def main():
     ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable Ethernet support")
     ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
     parser.add_argument("--with-analyzer",        action="store_true",     help="Enable Analyzer support")
-    parser.add_argument("--eth-ip",              default="192.168.100.50", type=str, help="Ethernet/Etherbone IP address")
+    parser.add_argument("--eth-ip",              default="192.168.43.50", type=str, help="Ethernet/Etherbone IP address")
     parser.add_argument("--eth-dynamic-ip",      action="store_true", help="Enable dynamic Ethernet IP addresses setting")
     builder_args(parser)
     soc_core_args(parser)
