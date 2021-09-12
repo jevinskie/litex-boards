@@ -54,7 +54,15 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), with_led_chaser=True, with_video_terminal=False, with_uartbone=False, with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
+    def __init__(self, sys_clk_freq=int(50e6),
+                 with_led_chaser     = True,
+                 with_video_terminal = False,
+                 with_jtagbone       = False,
+                 with_uartbone       = False,
+                 with_ethernet       = False,
+                 with_etherbone      = False,
+                 eth_ip              = "192.168.42.50",
+                 eth_dynamic_ip =False, **kwargs):
         self.platform = platform = deca.Platform()
 
         # Defaults to JTAG-UART since no hardware UART.
@@ -74,6 +82,10 @@ class BaseSoC(SoCCore):
         if with_video_terminal:
             self.submodules.videophy = VideoDVIPHY(platform.request("hdmi"), clock_domain="hdmi")
             self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi")
+
+        # Jtagbone ---------------------------------------------------------------------------------
+        if with_jtagbone:
+            self.add_jtagbone()
 
         # UARTbone
         if with_uartbone:
@@ -103,7 +115,8 @@ def main():
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
     parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
     parser.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA)")
-    parser.add_argument("--with-uartbone",       action="store_true", help="Enable Jtagbone support")
+    parser.add_argument("--with-jtagbone",       action="store_true", help="Enable JTAGbone support")
+    parser.add_argument("--with-uartbone",       action="store_true", help="Enable UARTbone support")
     ethopts = parser.add_mutually_exclusive_group()
     ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable Ethernet support")
     ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
@@ -116,6 +129,7 @@ def main():
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
         with_video_terminal      = args.with_video_terminal,
+        with_jtagbone            = args.with_jtagbone,
         with_uartbone            = args.with_uartbone,
         with_ethernet            = args.with_ethernet,
         with_etherbone           = args.with_etherbone,
