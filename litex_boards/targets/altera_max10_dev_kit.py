@@ -67,7 +67,7 @@ class BareSoC(SoCCore):
 
 class BaseSoC(SoCCore):
     def __init__(self,
-                 sys_clk_freq=int(100e6),
+                 sys_clk_freq=int(50e6),
                  with_led_chaser     = True,
                  with_jtagbone       = False,
                  with_uartbone       = False,
@@ -111,10 +111,10 @@ class BaseSoC(SoCCore):
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
-                # *self.ethphy._signals_recursive,
+                *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
-                # eth_clock_pads,
+                eth_clock_pads,
                 eth_pads,
             })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
@@ -144,7 +144,7 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=100e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable Jtagbone support")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable Jtagbone support")
     ethopts = parser.add_mutually_exclusive_group()
