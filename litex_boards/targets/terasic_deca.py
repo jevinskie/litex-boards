@@ -109,6 +109,14 @@ class BaseSoC(SoCCore):
 
 # Build --------------------------------------------------------------------------------------------
 
+def argparse_set_def(parser: argparse.ArgumentParser, dst: str, default):
+    changed = False
+    for a in parser._actions:
+        if dst == a.dest:
+            a.default = default
+            return
+    raise ValueError(f'dest var {dst} arg not found')
+
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
@@ -124,6 +132,7 @@ def main():
     parser.add_argument("--eth-dynamic-ip",      action="store_true", help="Enable dynamic Ethernet IP addresses setting")
     builder_args(parser)
     soc_core_args(parser)
+    argparse_set_def(parser, 'csr_csv', 'csr.csv')
     args = parser.parse_args()
 
     soc = BaseSoC(
