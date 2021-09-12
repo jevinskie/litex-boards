@@ -21,6 +21,8 @@ from litex.soc.cores.bitbang import I2CMaster
 
 from liteeth.phy.mii import LiteEthPHYMII
 
+from litescope import LiteScopeAnalyzer
+
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
@@ -62,7 +64,9 @@ class BaseSoC(SoCCore):
                  with_ethernet       = False,
                  with_etherbone      = False,
                  eth_ip              = "192.168.42.50",
-                 eth_dynamic_ip =False, **kwargs):
+                 eth_dynamic_ip      = False,
+                 with_analyzer       = False,
+                 **kwargs):
         self.platform = platform = deca.Platform()
 
         # Defaults to JTAG-UART since no hardware UART.
@@ -101,6 +105,33 @@ class BaseSoC(SoCCore):
             if with_etherbone:
                 self.add_etherbone(phy=self.ethphy, ip_address=eth_ip)
 
+        # Analyzer ---------------------------------------------------------------------------------
+        if with_analyzer:
+            analyzer_signals = [
+                # IBus (could also just added as self.cpu.ibus)
+                self.cpu.ibus.stb,
+                self.cpu.ibus.cyc,
+                self.cpu.ibus.adr,
+                self.cpu.ibus.we,
+                self.cpu.ibus.ack,
+                self.cpu.ibus.sel,
+                self.cpu.ibus.dat_w,
+                self.cpu.ibus.dat_r,
+                # DBus (could also just added as self.cpu.dbus)
+                self.cpu.dbus.stb,
+                self.cpu.dbus.cyc,
+                self.cpu.dbus.adr,
+                self.cpu.dbus.we,
+                self.cpu.dbus.ack,
+                self.cpu.dbus.sel,
+                self.cpu.dbus.dat_w,
+                self.cpu.dbus.dat_r,
+            ]
+            self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
+                depth        = 512,
+                clock_domain = "sys",
+                csr_csv      = "analyzer.csv")
+
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
             self.submodules.leds = LedChaser(
@@ -128,6 +159,7 @@ def main():
     ethopts = parser.add_mutually_exclusive_group()
     ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable Ethernet support")
     ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
+    parser.add_argument("--with-analyzer",        action="store_true",     help="Enable Analyzer support")
     parser.add_argument("--eth-ip",              default="192.168.100.50", type=str, help="Ethernet/Etherbone IP address")
     parser.add_argument("--eth-dynamic-ip",      action="store_true", help="Enable dynamic Ethernet IP addresses setting")
     builder_args(parser)
@@ -144,6 +176,7 @@ def main():
         with_etherbone           = args.with_etherbone,
         eth_ip                   = args.eth_ip,
         eth_dynamic_ip           = args.eth_dynamic_ip,
+        with_analyzer            = args.with_analyzer,
         **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))
