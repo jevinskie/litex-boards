@@ -39,13 +39,21 @@ def qsf_to_pins(qsf_path: str):
 				pin_name, idx = pin_name.split('[')
 				idx = int(idx[:-1])
 			pin_pad = l[1].removeprefix('PIN_')
-			pins[pin_name_orig] = {'name': pin_name, 'name_orig': pin_name_orig, 'pad': pin_pad}
+			if pin_name_orig in pins:
+				pins[pin_name_orig]['name'] = pin_name
+				pins[pin_name_orig]['pad'] = pin_pad
+				pins[pin_name_orig]['name_orig'] = pin_name_orig
+			else:
+				pins[pin_name_orig] = {'name': pin_name, 'name_orig': pin_name_orig, 'pad': pin_pad}
 			if idx is not None:
 				pins[pin_name_orig]['idx'] = idx
 		elif len(l) == 6 and l[0] == 'set_instance_assignment' and l[1] == '-name' and l[2] == 'IO_STANDARD' and l[4] == '-to':
 			pin_name_orig = l[5]
 			iostd = l[3]
-			pins[pin_name_orig]['iostd'] = iostd
+			if pin_name_orig in pins:
+				pins[pin_name_orig]['iostd'] = iostd
+			else:
+				pins[pin_name_orig] = {'iostd': iostd}
 		elif len(l) == 6 and l[0] == 'set_instance_assignment' and l[1] == '-name' and l[4] == '-to':
 			pin_name_orig = l[5]
 			misc_key = l[2]
@@ -103,7 +111,7 @@ def qsf_to_pins(qsf_path: str):
 
 
 def pins_to_litex(pins):
-	for pin_name, pin in pins.items():
+	for pin_name, pin in sorted(pins.items(), key=lambda t: t[0]):
 		iostd = pin['iostd'] if 'iostd' in pin else None
 		misc = pin['misc'] if 'misc' in pin else None
 

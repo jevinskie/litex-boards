@@ -56,7 +56,8 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(100e6),
+    def __init__(self,
+                 sys_clk_freq=int(100e6),
                  with_led_chaser     = True,
                  with_video_terminal = False,
                  with_jtagbone       = False,
@@ -109,13 +110,13 @@ class BaseSoC(SoCCore):
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
-            analyzer_signals = list(set([
+            analyzer_signals = list({
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
                 # eth_clock_pads,
-                eth_pads
-            ]))
+                eth_pads,
+            })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                 depth        = 512,
                 clock_domain = "sys",
@@ -142,16 +143,16 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=100e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",        default=100e6,       help="System clock frequency (default: 50MHz)")
     parser.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA)")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable JTAGbone support")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable UARTbone support")
     ethopts = parser.add_mutually_exclusive_group()
     ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable Ethernet support")
     ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
-    parser.add_argument("--with-analyzer",        action="store_true",     help="Enable Analyzer support")
     parser.add_argument("--eth-ip",              default="192.168.43.50", type=str, help="Ethernet/Etherbone IP address")
     parser.add_argument("--eth-dynamic-ip",      action="store_true", help="Enable dynamic Ethernet IP addresses setting")
+    parser.add_argument("--with-analyzer",       action="store_true", help="Enable Analyzer support")
     builder_args(parser)
     soc_core_args(parser)
     argparse_set_def(parser, 'csr_csv', 'csr.csv')

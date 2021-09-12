@@ -16,10 +16,10 @@ from litex.soc.cores.clock import Max10PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
-from litex.soc.cores import uart
-from litex.soc.cores.jtag import JTAGAtlantic
 
 from liteeth.phy.mii import LiteEthPHYMII
+
+from litescope import LiteScopeAnalyzer
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -56,9 +56,9 @@ class BareSoC(SoCCore):
         self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
 
         # JTAGBone
-        # self.add_jtagbone() # No Altera JTAG PHY (yet...)
+        self.add_jtagbone()
 
-        self.add_uartbone(baudrate=3_000_000)
+        # self.add_uartbone(baudrate=3_000_000)
 
         # Leds -------------------------------------------------------------------------------------
         self.submodules.leds = LedChaser(
@@ -66,7 +66,17 @@ class BareSoC(SoCCore):
             sys_clk_freq = sys_clk_freq)
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=50e6, with_jtagbone=False, with_uartbone=False, with_ethernet=False, with_etherbone=False, eth_ip="192.168.100.50", eth_dynamic_ip=False, **kwargs):
+    def __init__(self,
+                 sys_clk_freq=int(100e6),
+                 with_led_chaser     = True,
+                 with_jtagbone       = False,
+                 with_uartbone       = False,
+                 with_ethernet       = False,
+                 with_etherbone      = False,
+                 eth_ip              = "192.168.43.50",
+                 eth_dynamic_ip      = False,
+                 with_analyzer       = False,
+                 **kwargs):
         self.platform = platform = altera_max10_dev_kit.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -83,28 +93,41 @@ class BaseSoC(SoCCore):
             self.add_jtagbone()
 
         # UARTbone
-        # self.check_if_exists("uartbone")
-        # self.submodules.uartbone_phy = uart.UARTPHY(self.platform.request("serial"), sys_clk_freq, 3_000_000)
-        # self.submodules.uartbone = uart.UARTBone(phy=self.uartbone_phy, clk_freq=sys_clk_freq)
-        # self.bus.add_master(name="uartbone", master=self.uartbone.wishbone)
-        # self.add_uartbone(baudrate=3_000_000)
         if with_uartbone:
             self.add_uartbone(baudrate=3_000_000)
 
         # Ethernet
         if with_ethernet or with_etherbone:
+            eth_clock_pads = self.platform.request("eth_clocks")
+            eth_pads = self.platform.request("eth")
             self.submodules.ethphy = LiteEthPHYMII(
-                clock_pads = self.platform.request("eth_clocks"),
-                pads       = self.platform.request("eth"))
+                clock_pads = eth_clock_pads,
+                pads       = eth_pads)
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
                 self.add_etherbone(phy=self.ethphy, ip_address=eth_ip)
 
+        # Analyzer ---------------------------------------------------------------------------------
+        if with_analyzer:
+            analyzer_signals = list({
+                # *self.ethphy._signals_recursive,
+                # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
+                *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
+                # eth_clock_pads,
+                eth_pads,
+            })
+            self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
+                depth        = 512,
+                clock_domain = "sys",
+                register     = True,
+                csr_csv      = "analyzer.csv")
+
         # Leds -------------------------------------------------------------------------------------
-        self.submodules.leds = LedChaser(
-            pads         = platform.request_all("user_led"),
-            sys_clk_freq = sys_clk_freq)
+        if with_led_chaser:
+            self.submodules.leds = LedChaser(
+                pads         = platform.request_all("user_led"),
+                sys_clk_freq = sys_clk_freq)
 
 
 # Build --------------------------------------------------------------------------------------------
@@ -121,15 +144,15 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",        default=100e6,        help="System clock frequency (default: 50MHz)")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable Jtagbone support")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable Jtagbone support")
     ethopts = parser.add_mutually_exclusive_group()
     ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable Ethernet support")
     ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
-    parser.add_argument("--eth-ip",              default="192.168.100.50", type=str, help="Ethernet/Etherbone IP address")
+    parser.add_argument("--eth-ip",              default="192.168.43.50", type=str, help="Ethernet/Etherbone IP address")
     parser.add_argument("--eth-dynamic-ip",      action="store_true", help="Enable dynamic Ethernet IP addresses setting")
-
+    parser.add_argument("--with-analyzer",       action="store_true", help="Enable Analyzer support")
     builder_args(parser)
     soc_core_args(parser)
     argparse_set_def(parser, 'csr_csv', 'csr.csv')
@@ -137,22 +160,20 @@ def main():
     # argparse_set_def(parser, 'uart_fifo_depth', 1024)
     # argparse_set_def(parser, 'cpu_type', 'picorv32')
     # argparse_set_def(parser, 'cpu_variant', 'minimal')
-    # argparse_set_def(parser, 'uart_name', 'jtag_atlantic')
 
     args = parser.parse_args()
 
     assert not (args.with_etherbone and args.eth_dynamic_ip)
 
-    # soc = BareSoC(
-    #     sys_clk_freq             = int(float(args.sys_clk_freq)),
-    # )
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
-        with_uartbone=args.with_uartbone,
-        with_ethernet=args.with_ethernet,
-        with_jtagbone=args.with_jtagbone,
-        eth_ip=args.eth_ip,
-        eth_dynamic_ip=args.eth_dynamic_ip,
+        with_jtagbone            = args.with_jtagbone,
+        with_uartbone            = args.with_uartbone,
+        with_ethernet            = args.with_ethernet,
+        with_etherbone           = args.with_etherbone,
+        eth_ip                   = args.eth_ip,
+        eth_dynamic_ip           = args.eth_dynamic_ip,
+        with_analyzer            = args.with_analyzer,
         **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))

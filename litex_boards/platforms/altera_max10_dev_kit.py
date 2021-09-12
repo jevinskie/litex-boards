@@ -28,7 +28,7 @@ _io = [
     ("user_led", 3, Pins("AA21"), IOStandard("1.5 V")),
     ("user_led", 4, Pins("AA22"), IOStandard("1.5 V")),
 
-    # Switches d
+    # Switches
     ("user_sw", 0, Pins("H21"), IOStandard("1.5 V")),
     ("user_sw", 1, Pins("H22"), IOStandard("1.5 V")),
     ("user_sw", 2, Pins("J21"), IOStandard("1.5 V")),
@@ -49,9 +49,9 @@ _io = [
      ),
 
     # RGMII Ethernet running at 100 mbit
-    # Port 0 (bottom/top?)
+    # Port 0 / A (bottom jack)
     ("eth_clocks", 0,
-        Subsignal("tx", Pins("E10")),
+        Subsignal("tx", Pins("E10"), IOStandard("3.3-V LVCMOS")),
         Subsignal("rx", Pins("P3")),
         IOStandard("2.5 V")
      ),
@@ -70,9 +70,9 @@ _io = [
          IOStandard("2.5 V")
     ),
 
-    # Port 1 (top/bottom?)
+    # Port 1 / B (top jack)
     ("eth_clocks", 1,
-        Subsignal("tx", Pins("C20")),
+        Subsignal("tx", Pins("C20"), IOStandard("3.3-V LVCMOS")),
         Subsignal("rx", Pins("J19")),
         IOStandard("2.5 V")
      ),
