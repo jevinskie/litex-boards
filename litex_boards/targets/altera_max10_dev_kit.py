@@ -10,6 +10,8 @@ import os
 import argparse
 
 from migen import *
+from migen.genlib.cdc import ClockBuffer
+
 from litex_boards.platforms import altera_max10_dev_kit
 
 from litex.soc.cores.clock import Max10PLL
@@ -103,6 +105,14 @@ class BaseSoC(SoCCore):
             self.submodules.ethphy = LiteEthPHYMII(
                 clock_pads = eth_clock_pads,
                 pads       = eth_pads)
+            # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
+            self.platform.toolchain.additional_sdc_commands += [
+                'create_clock -name eth_rx_clk -period 40.0 [get_ports {eth_clocks_rx}]',
+                'create_clock -name eth_tx_clk -period 40.0 [get_ports {eth_clocks_tx}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
+                'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
+            ]
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
@@ -111,14 +121,15 @@ class BaseSoC(SoCCore):
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
-                *self.ethphy._signals_recursive,
+                *self.ethphy._signals,
+                # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
-                eth_clock_pads,
+                # eth_clock_pads,
                 eth_pads,
             })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                depth        = 512,
+                depth        = 256,
                 clock_domain = "sys",
                 register     = True,
                 csr_csv      = "analyzer.csv")

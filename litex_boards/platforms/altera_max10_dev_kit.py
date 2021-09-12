@@ -51,7 +51,7 @@ _io = [
     # RGMII Ethernet running at 100 mbit
     # Port 0 / A (bottom jack)
     ("eth_clocks", 0,
-        Subsignal("tx", Pins("E10"), IOStandard("3.3-V LVCMOS")),
+        Subsignal("tx", Pins("E10")),
         Subsignal("rx", Pins("P3")),
         IOStandard("2.5 V")
      ),
@@ -72,7 +72,7 @@ _io = [
 
     # Port 1 / B (top jack)
     ("eth_clocks", 1,
-        Subsignal("tx", Pins("C20"), IOStandard("3.3-V LVCMOS")),
+        Subsignal("tx", Pins("C20")),
         Subsignal("rx", Pins("J19")),
         IOStandard("2.5 V")
      ),
