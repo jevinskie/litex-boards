@@ -29,6 +29,7 @@ class _CRG(Module):
     def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
+        # self.clock_domains.cd_eth_gtx = ClockDomain()
 
         # # #
 
@@ -40,6 +41,7 @@ class _CRG(Module):
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
+        # pll.create_clkout(self.cd_eth_gtx, 125e6)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -88,7 +90,9 @@ class BaseSoC(SoCCore):
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+        self.submodules.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+        # self.comb += self.platform.request("eneta_gtx_clk").eq(self.crg.cd_eth_gtx.clk)
+        # self.comb += self.platform.request("enetb_gtx_clk").eq(self.crg.cd_eth_gtx.clk)
 
         # Jtagbone ---------------------------------------------------------------------------------
         if with_jtagbone:
@@ -112,6 +116,18 @@ class BaseSoC(SoCCore):
                 'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
                 'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
                 'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
+
+                'create_clock -name eth0_rx_clk -period 40.0 [get_ports {eth_clocks0_rx}]',
+                'create_clock -name eth0_tx_clk -period 40.0 [get_ports {eth_clocks0_tx}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_rx_clk}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_tx_clk}]',
+                'set_false_path -from [get_clocks {eth0_rx_clk}] -to [get_clocks {eth0_tx_clk}]',
+
+                'create_clock -name eth1_rx_clk -period 40.0 [get_ports {eth_clocks1_rx}]',
+                'create_clock -name eth1_tx_clk -period 40.0 [get_ports {eth_clocks1_tx}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_rx_clk}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_tx_clk}]',
+                'set_false_path -from [get_clocks {eth1_rx_clk}] -to [get_clocks {eth1_tx_clk}]',
             ]
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
@@ -121,7 +137,7 @@ class BaseSoC(SoCCore):
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
-                *self.ethphy._signals,
+                *self.ethphy._signals, self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
