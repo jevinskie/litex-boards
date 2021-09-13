@@ -98,6 +98,13 @@ class BaseSoC(SoCCore):
 
         # Ethernet
         if with_ethernet or with_etherbone:
+            self.platform.toolchain.additional_sdc_commands += [
+                'create_clock -name eth_rx_clk -period 40.0 [get_ports {eth_clocks_rx}]',
+                'create_clock -name eth_tx_clk -period 40.0 [get_ports {eth_clocks_tx}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
+                'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
+            ]
             eth_clock_pads = self.platform.request("eth_clocks")
             eth_pads = self.platform.request("eth")
             self.submodules.ethphy = LiteEthPHYMII(
@@ -111,6 +118,7 @@ class BaseSoC(SoCCore):
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
+                # *self.ethphy._signals,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
