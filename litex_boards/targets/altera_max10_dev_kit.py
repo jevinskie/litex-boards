@@ -19,7 +19,9 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
 
+from liteeth.phy import LiteEthPHY
 from liteeth.phy.mii import LiteEthPHYMII
+from liteeth.phy.gmii_mii import LiteEthPHYGMIIMII
 
 from litescope import LiteScopeAnalyzer
 
@@ -106,9 +108,11 @@ class BaseSoC(SoCCore):
         if with_ethernet or with_etherbone:
             eth_clock_pads = self.platform.request("eth_clocks")
             eth_pads = self.platform.request("eth")
+
             self.submodules.ethphy = LiteEthPHYMII(
                 clock_pads = eth_clock_pads,
                 pads       = eth_pads)
+
             # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
             self.platform.toolchain.additional_sdc_commands += [
                 'create_clock -name eth_rx_clk -period 40.0 [get_ports {eth_clocks_rx}]',
@@ -140,7 +144,7 @@ class BaseSoC(SoCCore):
                 *self.ethphy._signals, self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
-                *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
+                # *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
                 # eth_clock_pads,
                 eth_pads,
             })
@@ -187,6 +191,8 @@ def main():
     # argparse_set_def(parser, 'uart_fifo_depth', 1024)
     # argparse_set_def(parser, 'cpu_type', 'picorv32')
     # argparse_set_def(parser, 'cpu_variant', 'minimal')
+    argparse_set_def(parser, 'integrated_rom_size', 32*1024)
+    argparse_set_def(parser, 'integrated_sram_size', 4*1024)
 
     args = parser.parse_args()
 

@@ -53,6 +53,7 @@ _io = [
     ("eth_clocks", 0,
         Subsignal("tx", Pins("E10"), IOStandard("3.3-V LVCMOS")),
         Subsignal("rx", Pins("P3")),
+        # Subsignal("gtx", Pins("T5")),
         IOStandard("2.5 V")
      ),
     ("eth", 0,
@@ -373,6 +374,10 @@ class Platform(AlteraPlatform):
 
     def __init__(self):
         AlteraPlatform.__init__(self, "10M50DAF484C6GES", _io, _connectors)
+        self.add_platform_command("set_global_assignment -name AUTO_RESTART_CONFIGURATION ON")
+        self.add_platform_command("set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF")
+        self.add_platform_command("set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF")
+        self.add_platform_command("set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE \"SINGLE IMAGE WITH ERAM\"")
 
     def create_programmer(self):
         return USBBlaster(cable_name="USB-BlasterII")

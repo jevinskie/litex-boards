@@ -5,14 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a9470789-86cf-4b82-87a2-39d3808a2434" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/litex-boards.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/litex-boards.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/litex-boards.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/litex_boards/platforms/altera_max10_dev_kit.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/platforms/altera_max10_dev_kit.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" afterDir="false" />
     </list>
@@ -52,12 +46,13 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../litex" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../litespih4x" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="restartRequiresConfirmation" value="false" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
   </component>
   <component name="ReaderModeSettings">
     <option name="enabled" value="false" />
@@ -158,7 +153,9 @@
       <workItem from="1631495895732" duration="19000" />
       <workItem from="1631495927268" duration="16000" />
       <workItem from="1631496051540" duration="18000" />
-      <workItem from="1631496144347" duration="7299000" />
+      <workItem from="1631496144347" duration="7899000" />
+      <workItem from="1631579838508" duration="750000" />
+      <workItem from="1631581738630" duration="4138000" />
     </task>
     <servers />
   </component>
