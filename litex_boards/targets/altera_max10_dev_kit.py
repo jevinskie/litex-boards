@@ -31,7 +31,8 @@ class _CRG(Module):
     def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
-        # self.clock_domains.cd_eth_gtx = ClockDomain()
+        self.clock_domains.cd_eth_gtx = ClockDomain()
+        self.clock_domains.cd_eth_tx_int = ClockDomain()
 
         # # #
 
@@ -43,7 +44,8 @@ class _CRG(Module):
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
-        # pll.create_clkout(self.cd_eth_gtx, 125e6)
+        pll.create_clkout(self.cd_eth_tx_int, 25e6)
+        pll.create_clkout(self.cd_eth_gtx, 125e6)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -93,7 +95,7 @@ class BaseSoC(SoCCore):
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
-        # self.comb += self.platform.request("eneta_gtx_clk").eq(self.crg.cd_eth_gtx.clk)
+        self.comb += self.platform.request("eneta_gtx_clk").eq(self.crg.cd_eth_gtx.clk)
         # self.comb += self.platform.request("enetb_gtx_clk").eq(self.crg.cd_eth_gtx.clk)
 
         # Jtagbone ---------------------------------------------------------------------------------
@@ -107,6 +109,9 @@ class BaseSoC(SoCCore):
         # Ethernet
         if with_ethernet or with_etherbone:
             eth_clock_pads = self.platform.request("eth_clocks")
+            self.clk_tx_int_2 = Signal()
+            eth_clock_pads.tx = self.clk_tx_int_2
+            self.comb += self.clk_tx_int_2.eq(self.crg.cd_eth_tx_int.clk)
             eth_pads = self.platform.request("eth")
 
             self.submodules.ethphy = LiteEthPHYMII(

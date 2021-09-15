@@ -55,29 +55,7 @@
   <component name="ReaderModeSettings">
     <option name="enabled" value="false" />
   </component>
-  <component name="RunManager" selected="Python.extract_qsf_pins">
-    <configuration name="altera_max10_dev_kit" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <module name="litex-boards" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="$USER_HOME$/.pyenv/versions/3.9.1/bin/python3" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/litex_boards/targets" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="false" />
-      <option name="ADD_SOURCE_ROOTS" value="false" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.altera_max10_dev_kit">
     <configuration name="extract_qsf_pins" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="litex-boards" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -85,9 +63,9 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="$USER_HOME$/.pyenv/versions/3.9.1/bin/python3" />
+      <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/litex_boards/tools" />
-      <option name="IS_MODULE_SDK" value="false" />
+      <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="false" />
       <option name="ADD_SOURCE_ROOTS" value="false" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
@@ -107,9 +85,9 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="$USER_HOME$/.pyenv/versions/3.9.1/bin/python3" />
+      <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/litex_boards/targets" />
-      <option name="IS_MODULE_SDK" value="false" />
+      <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
@@ -154,6 +132,7 @@
       <workItem from="1631496144347" duration="7899000" />
       <workItem from="1631579838508" duration="750000" />
       <workItem from="1631581738630" duration="7466000" />
+      <workItem from="1631731540270" duration="1827000" />
     </task>
     <servers />
   </component>
@@ -171,6 +150,11 @@
           <line>109</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/../litex/litex/soc/cores/clock/intel_common.py</url>
+          <line>61</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
@@ -181,7 +165,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/litex_boards$extract_qsf_pins.coverage" NAME="extract_qsf_pins Coverage Results" MODIFIED="1631495662507" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/litex_boards/tools" />
-    <SUITE FILE_PATH="coverage/litex_boards$altera_max10_dev_kit.coverage" NAME="altera_max10_dev_kit Coverage Results" MODIFIED="1624655367136" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/litex_boards/targets" />
+    <SUITE FILE_PATH="coverage/litex_boards$altera_max10_dev_kit.coverage" NAME="altera_max10_dev_kit Coverage Results" MODIFIED="1631734767134" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/litex_boards/targets" />
     <SUITE FILE_PATH="coverage/litex_boards$terasic_deca.coverage" NAME="terasic_deca Coverage Results" MODIFIED="1631429472070" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/litex_boards/targets" />
   </component>
 </project>
