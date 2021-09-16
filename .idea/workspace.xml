@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a9470789-86cf-4b82-87a2-39d3808a2434" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/runConfigurations/alinx_ac1006_ax1006.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="a9470789-86cf-4b82-87a2-39d3808a2434" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -112,7 +109,7 @@
       <workItem from="1631496144347" duration="7899000" />
       <workItem from="1631579838508" duration="750000" />
       <workItem from="1631581738630" duration="7466000" />
-      <workItem from="1631731540270" duration="13781000" />
+      <workItem from="1631731540270" duration="14247000" />
     </task>
     <servers />
   </component>
