@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="false" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/litex_boards/targets/terasic_deca.py" />
-    <option name="PARAMETERS" value="--cpu-type serv --with-jtagbone --uart-name crossover --with-etherbone --with-analyzer" />
+    <option name="PARAMETERS" value="--cpu-type None --with-jtagbone --uart-name crossover --with-etherbone --with-analyzer" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

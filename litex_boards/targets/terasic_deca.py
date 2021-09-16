@@ -72,7 +72,7 @@ class BaseSoC(SoCCore):
 
         # Defaults to JTAG-UART since no hardware UART.
         if kwargs["uart_name"] == "serial":
-            kwargs["uart_name"] = "jtag_atlantic"
+            kwargs["uart_name"] = "crossover"
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
@@ -118,10 +118,11 @@ class BaseSoC(SoCCore):
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
-                # *self.ethphy._signals,
+                *self.ethphy._signals, self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
+                *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
                 eth_pads,
             })
