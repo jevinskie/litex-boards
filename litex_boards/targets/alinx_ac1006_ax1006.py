@@ -14,7 +14,7 @@ from migen.genlib.cdc import ClockBuffer
 
 from litex_boards.platforms import alinx_ac1006_ax1006
 
-from litex.soc.cores.clock import Max10PLL
+from litex.soc.cores.clock import Cyclone10LPPLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
@@ -23,14 +23,22 @@ from liteeth.phy import LiteEthPHY
 from liteeth.phy.mii import LiteEthPHYMII
 from liteeth.phy.gmii_mii import LiteEthPHYGMIIMII
 
+from litedram.modules import H57V2562GTR
+from litedram.phy import GENSDRPHY, HalfRateGENSDRPHY
+
 from litescope import LiteScopeAnalyzer
 
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
+    def __init__(self, platform, sys_clk_freq, with_sdram=False, sdram_rate="1:1"):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
+        if with_sdram and sdram_rate == "1:2":
+            self.clock_domains.cd_sys2x    = ClockDomain()
+            self.clock_domains.cd_sys2x_ps = ClockDomain(reset_less=True)
+        elif with_sdram:
+            self.clock_domains.cd_sys_ps = ClockDomain(reset_less=True)
 
         # # #
 
@@ -38,10 +46,16 @@ class _CRG(Module):
         clk50 = platform.request("clk50")
 
         # PLL
-        self.submodules.pll = pll = Max10PLL(speedgrade="-6")
+        self.submodules.pll = pll = Cyclone10LPPLL()
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
+
+        if with_sdram and sdram_rate == "1:2":
+            pll.create_clkout(self.cd_sys2x,    2*sys_clk_freq)
+            pll.create_clkout(self.cd_sys2x_ps, 2*sys_clk_freq, phase=90)
+        elif with_sdram:
+            pll.create_clkout(self.cd_sys_ps, sys_clk_freq, phase=90)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -57,7 +71,7 @@ class BareSoC(SoCCore):
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+        self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq)
 
         # JTAGBone
         self.add_jtagbone()
@@ -73,6 +87,8 @@ class BaseSoC(SoCCore):
     def __init__(self,
                  sys_clk_freq=int(50e6),
                  with_led_chaser     = True,
+                 with_sdram          = False,
+                 sdram_rate          = "1:1",
                  with_jtagbone       = False,
                  with_uartbone       = False,
                  with_ethernet       = False,
@@ -90,7 +106,16 @@ class BaseSoC(SoCCore):
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+        self.submodules.crg = _CRG(platform, sys_clk_freq, with_sdram=with_sdram, sdram_rate=sdram_rate)
+
+        if with_sdram:
+            sdrphy_cls = HalfRateGENSDRPHY if sdram_rate == "1:2" else GENSDRPHY
+            self.submodules.sdrphy = sdrphy_cls(platform.request("sdram"), sys_clk_freq)
+            self.add_sdram("sdram",
+                phy           = self.sdrphy,
+                module        = H57V2562GTR(sys_clk_freq, sdram_rate),
+                l2_cache_size = 0,
+            )
 
         # Jtagbone ---------------------------------------------------------------------------------
         if with_jtagbone:
@@ -178,6 +203,7 @@ def main():
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
     parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--with-sdram",          action="store_true", help="Enable SDRAM support")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable Jtagbone support")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable Jtagbone support")
     ethopts = parser.add_mutually_exclusive_group()
@@ -193,7 +219,7 @@ def main():
     # argparse_set_def(parser, 'uart_fifo_depth', 1024)
     # argparse_set_def(parser, 'cpu_type', 'picorv32')
     # argparse_set_def(parser, 'cpu_variant', 'minimal')
-    argparse_set_def(parser, 'integrated_rom_size', 32*1024)
+    argparse_set_def(parser, 'integrated_rom_size', 24*1024)
     argparse_set_def(parser, 'integrated_sram_size', 4*1024)
 
     args = parser.parse_args()
@@ -202,6 +228,7 @@ def main():
 
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
+        with_sdram               = args.with_sdram,
         with_jtagbone            = args.with_jtagbone,
         with_uartbone            = args.with_uartbone,
         with_ethernet            = args.with_ethernet,

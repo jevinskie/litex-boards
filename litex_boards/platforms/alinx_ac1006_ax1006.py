@@ -32,6 +32,27 @@ _io = [
         Subsignal("rx", Pins("M1")),
         IOStandard("3.3-V LVTTL")
      ),
+
+    # SDR SDRAM
+    ("sdram_clock", 0, Pins("D3"), IOStandard("3.3-V LVTTL")),
+    ("sdram", 0,
+        Subsignal("cke", Pins("C9")),
+        Subsignal("a",   Pins("B5 A4 B4 A2 D6 C6 E7 D8 C8 E8 A5 F8 F9")),
+        Subsignal("dq",  Pins(
+            "A15 B14 A14 B13 A13 B12 A12 B11",
+            "E9  C11 E10 D11 D12 C14 E11 D14"),
+            Misc("FAST_OUTPUT_ENABLE_REGISTER ON"),
+            Misc("FAST_INPUT_REGISTER ON")),
+        Subsignal("ba",    Pins("A6 B6")),
+        Subsignal("cas_n", Pins("B10")),
+        Subsignal("cs_n",  Pins("A7")),
+        Subsignal("ras_n", Pins("B7")),
+        Subsignal("we_n",  Pins("A10")),
+        Misc("CURRENT_STRENGTH_NEW \"MAXIMUM CURRENT\""),
+        Misc("FAST_OUTPUT_REGISTER ON"),
+        Misc("ALLOW_SYNCH_CTRL_USAGE OFF"),
+        IOStandard("3.3-V LVTTL"),
+    ),
 ]
 
 # Connectors ---------------------------------------------------------------------------------------

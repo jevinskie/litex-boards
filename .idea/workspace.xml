@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a9470789-86cf-4b82-87a2-39d3808a2434" name="Default Changelist" comment="" />
+    <list default="true" id="a9470789-86cf-4b82-87a2-39d3808a2434" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/litex_boards/platforms/alinx_ac1006_ax1006.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/platforms/alinx_ac1006_ax1006.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/litex_boards/targets/alinx_ac1006_ax1006.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/targets/alinx_ac1006_ax1006.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -42,7 +48,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/litex_boards/targets/alinx_ac1006_ax1006.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../litedram" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -109,7 +115,7 @@
       <workItem from="1631496144347" duration="7899000" />
       <workItem from="1631579838508" duration="750000" />
       <workItem from="1631581738630" duration="7466000" />
-      <workItem from="1631731540270" duration="14247000" />
+      <workItem from="1631731540270" duration="18602000" />
     </task>
     <servers />
   </component>
@@ -145,7 +151,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/litex_boards/targets/alinx_ac1006_ax1006.py</url>
-          <line>99</line>
+          <line>124</line>
           <option name="timeStamp" value="14" />
         </line-breakpoint>
       </breakpoints>
