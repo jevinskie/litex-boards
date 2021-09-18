@@ -115,12 +115,12 @@ class BaseSoC(SoCCore):
                 clock_pads = eth_clock_pads0,
                 pads       = eth_pads0)
 
-            eth_clock_pads1 = self.platform.request("eth_clocks")
-            eth_pads1 = self.platform.request("eth")
+            # eth_clock_pads1 = self.platform.request("eth_clocks")
+            # eth_pads1 = self.platform.request("eth")
 
-            self.submodules.ethphy1 = LiteEthPHYMII(
-                clock_pads = eth_clock_pads1,
-                pads       = eth_pads1)
+            # self.submodules.ethphy1 = LiteEthPHYMII(
+            #     clock_pads = eth_clock_pads1,
+            #     pads       = eth_pads1)
 
             # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
             # self.platform.toolchain.additional_sdc_commands += [
@@ -143,14 +143,14 @@ class BaseSoC(SoCCore):
             #     'set_false_path -from [get_clocks {eth1_rx_clk}] -to [get_clocks {eth1_tx_clk}]',
             # ]
             if with_ethernet:
-                self.add_ethernet(phy=self.ethphy, phy_cd="ethphy_eth", dynamic_ip=eth_dynamic_ip)
+                self.add_ethernet(phy=self.ethphy, phy_cd=self.ethphy.crg.cd_eth_rx.name.removesuffix("_rx"), dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
-                self.add_etherbone(phy=self.ethphy, phy_cd="ethphy_eth", ip_address=eth_ip)
+                self.add_etherbone(phy=self.ethphy, phy_cd=self.ethphy.crg.cd_eth_rx.name.removesuffix("_rx"), ip_address=eth_ip)
 
-            import socket
-            a0, a1, a2, a3 = socket.inet_aton(eth_ip)
-            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            self.add_etherbone(name="etherbone1", phy=self.ethphy1, phy_cd="ethphy1_eth", mac_address=0x10e2d5000000+1, ip_address=eth_ip1)
+            # import socket
+            # a0, a1, a2, a3 = socket.inet_aton(eth_ip)
+            # eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
+            # self.add_etherbone(name="etherbone1", phy=self.ethphy1, phy_cd="ethphy1_eth", mac_address=0x10e2d5000000+1, ip_address=eth_ip1)
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
