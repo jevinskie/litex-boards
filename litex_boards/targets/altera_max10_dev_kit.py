@@ -103,15 +103,25 @@ class BaseSoC(SoCCore):
         # Ethernet
         if with_ethernet or with_etherbone:
             self.add_constant("USE_ALT_MODE_FOR_88E1111")
-            self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR", 0)
-            self.add_constant("ALT_MODE_FOR_88E1111", 0b1111)
+            self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR0", 0)
+            self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
+            self.add_constant("ALT_MODE_FOR_88E1111", 0b1111)  # HW_CONFIG GMII
 
-            eth_clock_pads = self.platform.request("eth_clocks")
-            eth_pads = self.platform.request("eth")
+            eth_clock_pads0 = self.platform.request("eth_clocks")
+            eth_pads0 = self.platform.request("eth")
 
             self.submodules.ethphy = LiteEthPHYMII(
-                clock_pads = eth_clock_pads,
-                pads       = eth_pads)
+                clock_pads = eth_clock_pads0,
+                pads       = eth_pads0)
+            self.ethphy = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethphy)
+
+            eth_clock_pads1 = self.platform.request("eth_clocks")
+            eth_pads1 = self.platform.request("eth")
+
+            self.submodules.ethphy1 = LiteEthPHYMII(
+                clock_pads = eth_clock_pads1,
+                pads       = eth_pads1)
+            self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.ethphy1)
 
             # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
             self.platform.toolchain.additional_sdc_commands += [
@@ -135,8 +145,16 @@ class BaseSoC(SoCCore):
             ]
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
+                self.ethernet = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethernet)
             if with_etherbone:
                 self.add_etherbone(phy=self.ethphy, ip_address=eth_ip)
+                self.etherbone = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.etherbone)
+
+            import socket
+            a0, a1, a2, a3 = socket.inet_aton(eth_ip)
+            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
+            self.add_etherbone(name="etherbone1", phy=self.ethphy1, mac_address=0x10e2d5000000+1, ip_address=eth_ip1)
+            self.etherbone1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.etherbone1)
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
@@ -148,7 +166,7 @@ class BaseSoC(SoCCore):
                 # *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
                 # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
-                eth_pads,
+                eth_pads0,
             })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                 depth        = 128,
