@@ -143,18 +143,19 @@ class BaseSoC(SoCCore):
                 'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_tx_clk}]',
                 'set_false_path -from [get_clocks {eth1_rx_clk}] -to [get_clocks {eth1_tx_clk}]',
             ]
-            if with_ethernet:
-                self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
-                self.ethernet = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethernet)
+            # if with_ethernet:
+            #     self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
+            #     self.ethernet = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethernet)
             if with_etherbone:
                 self.add_etherbone(phy=self.ethphy, ip_address=eth_ip)
-                self.etherbone = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.etherbone)
+                # self.etherbone = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.etherbone)
+                # self.etherbone = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.etherbone)
 
-            import socket
-            a0, a1, a2, a3 = socket.inet_aton(eth_ip)
-            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            self.add_etherbone(name="etherbone1", phy=self.ethphy1, mac_address=0x10e2d5000000+1, ip_address=eth_ip1)
-            self.etherbone1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.etherbone1)
+            # import socket
+            # a0, a1, a2, a3 = socket.inet_aton(eth_ip)
+            # eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
+            # self.add_etherbone(name="etherbone1", phy=self.ethphy1, mac_address=0x10e2d5000000+1, ip_address=eth_ip1)
+            # self.etherbone1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.etherbone1)
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
