@@ -5,10 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a9470789-86cf-4b82-87a2-39d3808a2434" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/litex_boards/platforms/alinx_ac1006_ax1006.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/platforms/alinx_ac1006_ax1006.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/litex_boards/targets/alinx_ac1006_ax1006.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/targets/alinx_ac1006_ax1006.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" beforeDir="false" afterPath="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -115,7 +112,7 @@
       <workItem from="1631496144347" duration="7899000" />
       <workItem from="1631579838508" duration="750000" />
       <workItem from="1631581738630" duration="7466000" />
-      <workItem from="1631731540270" duration="18602000" />
+      <workItem from="1631731540270" duration="26771000" />
     </task>
     <servers />
   </component>
@@ -139,11 +136,6 @@
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py</url>
-          <line>116</line>
-          <option name="timeStamp" value="11" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/litex_boards/targets/terasic_deca.py</url>
           <line>128</line>

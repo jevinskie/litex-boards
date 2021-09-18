@@ -31,8 +31,6 @@ class _CRG(Module):
     def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
-        self.clock_domains.cd_eth_gtx = ClockDomain()
-        self.clock_domains.cd_eth_tx_int = ClockDomain()
 
         # # #
 
@@ -44,8 +42,6 @@ class _CRG(Module):
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
-        pll.create_clkout(self.cd_eth_tx_int, 25e6)
-        # pll.create_clkout(self.cd_eth_gtx, 125e6)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -95,8 +91,6 @@ class BaseSoC(SoCCore):
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
-        self.comb += self.platform.request("eneta_gtx_clk").eq(self.crg.cd_eth_tx_int.clk)
-        # self.comb += self.platform.request("enetb_gtx_clk").eq(self.crg.cd_eth_gtx.clk)
 
         # Jtagbone ---------------------------------------------------------------------------------
         if with_jtagbone:
@@ -109,15 +103,10 @@ class BaseSoC(SoCCore):
         # Ethernet
         if with_ethernet or with_etherbone:
             eth_clock_pads = self.platform.request("eth_clocks")
-            # eth_clock_pads.tx = self.crg.cd_eth_tx_int.clk
-            eth_clock_pads_fake = Record([
-                ("rx", eth_clock_pads.rx),
-                ("tx", self.crg.cd_eth_tx_int.clk),
-            ], "eth_clock_pads")
             eth_pads = self.platform.request("eth")
 
             self.submodules.ethphy = LiteEthPHYMII(
-                clock_pads = eth_clock_pads_fake,
+                clock_pads = eth_clock_pads,
                 pads       = eth_pads)
 
             # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
@@ -148,16 +137,17 @@ class BaseSoC(SoCCore):
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
-                *self.ethphy._signals, self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
+                # *self.ethphy._signals,
+                self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
-                *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
-                *self.ethcore.mac.core._signals,
+                # *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
+                # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
                 eth_pads,
             })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                depth        = 512,
+                depth        = 128,
                 clock_domain = "sys",
                 register     = True,
                 csr_csv      = "analyzer.csv")
