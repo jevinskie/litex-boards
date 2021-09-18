@@ -121,7 +121,7 @@ class BaseSoC(SoCCore):
             self.submodules.ethphy1 = LiteEthPHYMII(
                 clock_pads = eth_clock_pads1,
                 pads       = eth_pads1)
-            self.ethphy1 = ClockDomainsRenamer({"ethphy1_eth_rx": "eth_rx", "ethphy1_eth_tx": "eth_tx"})(self.ethphy1)
+            self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.ethphy1)
 
             # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
             self.platform.toolchain.additional_sdc_commands += [
