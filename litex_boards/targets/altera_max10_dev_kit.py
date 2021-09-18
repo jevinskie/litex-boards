@@ -11,6 +11,7 @@ import argparse
 
 from migen import *
 from migen.genlib.cdc import ClockBuffer
+from migen.fhdl.tools import list_clock_domains, list_clock_domains_expr
 
 from litex_boards.platforms import altera_max10_dev_kit
 
@@ -113,7 +114,6 @@ class BaseSoC(SoCCore):
             self.submodules.ethphy = LiteEthPHYMII(
                 clock_pads = eth_clock_pads0,
                 pads       = eth_pads0)
-            self.ethphy = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethphy)
 
             eth_clock_pads1 = self.platform.request("eth_clocks")
             eth_pads1 = self.platform.request("eth")
@@ -121,41 +121,36 @@ class BaseSoC(SoCCore):
             self.submodules.ethphy1 = LiteEthPHYMII(
                 clock_pads = eth_clock_pads1,
                 pads       = eth_pads1)
-            self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.ethphy1)
 
             # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
-            self.platform.toolchain.additional_sdc_commands += [
-                'create_clock -name eth_rx_clk -period 40.0 [get_ports {eth_clocks_rx}]',
-                'create_clock -name eth_tx_clk -period 40.0 [get_ports {eth_clocks_tx}]',
-                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
-                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
-                'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
-
-                'create_clock -name eth0_rx_clk -period 40.0 [get_ports {eth_clocks0_rx}]',
-                'create_clock -name eth0_tx_clk -period 40.0 [get_ports {eth_clocks0_tx}]',
-                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_rx_clk}]',
-                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_tx_clk}]',
-                'set_false_path -from [get_clocks {eth0_rx_clk}] -to [get_clocks {eth0_tx_clk}]',
-
-                'create_clock -name eth1_rx_clk -period 40.0 [get_ports {eth_clocks1_rx}]',
-                'create_clock -name eth1_tx_clk -period 40.0 [get_ports {eth_clocks1_tx}]',
-                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_rx_clk}]',
-                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_tx_clk}]',
-                'set_false_path -from [get_clocks {eth1_rx_clk}] -to [get_clocks {eth1_tx_clk}]',
-            ]
-            # if with_ethernet:
-            #     self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
-            #     self.ethernet = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethernet)
+            # self.platform.toolchain.additional_sdc_commands += [
+            #     'create_clock -name eth_rx_clk -period 40.0 [get_ports {eth_clocks_rx}]',
+            #     'create_clock -name eth_tx_clk -period 40.0 [get_ports {eth_clocks_tx}]',
+            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
+            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
+            #     'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
+            #
+            #     'create_clock -name eth0_rx_clk -period 40.0 [get_ports {eth_clocks0_rx}]',
+            #     'create_clock -name eth0_tx_clk -period 40.0 [get_ports {eth_clocks0_tx}]',
+            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_rx_clk}]',
+            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_tx_clk}]',
+            #     'set_false_path -from [get_clocks {eth0_rx_clk}] -to [get_clocks {eth0_tx_clk}]',
+            #
+            #     'create_clock -name eth1_rx_clk -period 40.0 [get_ports {eth_clocks1_rx}]',
+            #     'create_clock -name eth1_tx_clk -period 40.0 [get_ports {eth_clocks1_tx}]',
+            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_rx_clk}]',
+            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_tx_clk}]',
+            #     'set_false_path -from [get_clocks {eth1_rx_clk}] -to [get_clocks {eth1_tx_clk}]',
+            # ]
+            if with_ethernet:
+                self.add_ethernet(phy=self.ethphy, phy_cd="ethphy_eth", dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
-                self.add_etherbone(phy=self.ethphy, ip_address=eth_ip)
-                # self.etherbone = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.etherbone)
-                # self.etherbone = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.etherbone)
+                self.add_etherbone(phy=self.ethphy, phy_cd="ethphy_eth", ip_address=eth_ip)
 
-            # import socket
-            # a0, a1, a2, a3 = socket.inet_aton(eth_ip)
-            # eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            # self.add_etherbone(name="etherbone1", phy=self.ethphy1, mac_address=0x10e2d5000000+1, ip_address=eth_ip1)
-            # self.etherbone1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.etherbone1)
+            import socket
+            a0, a1, a2, a3 = socket.inet_aton(eth_ip)
+            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
+            self.add_etherbone(name="etherbone1", phy=self.ethphy1, phy_cd="ethphy1_eth", mac_address=0x10e2d5000000+1, ip_address=eth_ip1)
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
