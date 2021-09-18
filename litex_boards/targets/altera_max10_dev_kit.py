@@ -122,26 +122,6 @@ class BaseSoC(SoCCore):
                 clock_pads = eth_clock_pads1,
                 pads       = eth_pads1)
 
-            # self.specials.eth_rx_clk_buf = ClockBuffer(self.ethphy.crg.cd_eth_rx)
-            # self.platform.toolchain.additional_sdc_commands += [
-            #     'create_clock -name eth_rx_clk -period 40.0 [get_ports {eth_clocks_rx}]',
-            #     'create_clock -name eth_tx_clk -period 40.0 [get_ports {eth_clocks_tx}]',
-            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
-            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
-            #     'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
-            #
-            #     'create_clock -name eth0_rx_clk -period 40.0 [get_ports {eth_clocks0_rx}]',
-            #     'create_clock -name eth0_tx_clk -period 40.0 [get_ports {eth_clocks0_tx}]',
-            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_rx_clk}]',
-            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth0_tx_clk}]',
-            #     'set_false_path -from [get_clocks {eth0_rx_clk}] -to [get_clocks {eth0_tx_clk}]',
-            #
-            #     'create_clock -name eth1_rx_clk -period 40.0 [get_ports {eth_clocks1_rx}]',
-            #     'create_clock -name eth1_tx_clk -period 40.0 [get_ports {eth_clocks1_tx}]',
-            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_rx_clk}]',
-            #     'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth1_tx_clk}]',
-            #     'set_false_path -from [get_clocks {eth1_rx_clk}] -to [get_clocks {eth1_tx_clk}]',
-            # ]
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, phy_cd="ethphy_eth", dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
