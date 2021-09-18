@@ -102,6 +102,10 @@ class BaseSoC(SoCCore):
 
         # Ethernet
         if with_ethernet or with_etherbone:
+            self.add_constant("USE_ALT_MODE_FOR_88E1111")
+            self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR", 0)
+            self.add_constant("ALT_MODE_FOR_88E1111", 0b1111)
+
             eth_clock_pads = self.platform.request("eth_clocks")
             eth_pads = self.platform.request("eth")
 
