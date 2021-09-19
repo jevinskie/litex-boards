@@ -30,7 +30,7 @@ from litescope import LiteScopeAnalyzer
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq, with_rgmii_pll=False, with_adc_pll=False):
+    def __init__(self, platform, sys_clk_freq, with_rgmii_pll=False, rgmii_tx_delay=2e-9, with_adc_pll=False):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
 
@@ -45,12 +45,14 @@ class _CRG(Module):
         pll.register_clkin(clk50, 50e6)
 
         if with_rgmii_pll:
-            self.clock_domains.cd_eth_grx = ClockDomain("eth_grx")
-            self.clock_domains.cd_eth_gtx = ClockDomain("eth_gtx")
-            self.clock_domains.cd_eth_gtx_delayed = ClockDomain("eth_gtx_delayed", reset_less=True)
-            pll.create_clkout(self.cd_eth_gtx, 125e6)  # first so it uses clkout[0]
-            self.clock_domains.cd_eth_tx = ClockDomain()
-            self.clock_domains.cd_eth_tx_delayed = ClockDomain(reset_less=True)
+            self.clock_domains.cd_ethphy1_rx = ClockDomain()
+            self.clock_domains.cd_ethphy1_tx = ClockDomain()
+            self.clock_domains.cd_ethphy1_tx_delayed = ClockDomain(reset_less=True)
+            tx_phase = 125e6*rgmii_tx_delay*360
+            assert tx_phase < 360
+            # first so it uses clkout[0] to directly drive PIN
+            pll.create_clkout(self.cd_ethphy1_tx_delayed, 125e6, phase=tx_phase)
+            pll.create_clkout(self.cd_ethphy1_tx, 125e6, with_reset=False)
 
         pll.create_clkout(self.cd_sys, sys_clk_freq)
 
@@ -132,12 +134,12 @@ class BaseSoC(SoCCore):
             self.submodules.ethphy = LiteEthPHYMII(
                 clock_pads = eth_clock_pads0,
                 pads       = eth_pads0)
-            self.ethphy = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethphy)
+            self.ethphy = ClockDomainsRenamer({"eth_rx": "ethphy_rx", "eth_tx": "ethphy_tx"})(self.ethphy)
 
             if with_ethernet:
-                self.add_ethernet(phy=self.ethphy, phy_cd="ethphy_eth", dynamic_ip=eth_dynamic_ip)
+                self.add_ethernet(phy=self.ethphy, phy_cd="ethphy", dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
-                self.add_etherbone(phy=self.ethphy, phy_cd="ethphy_eth", ip_address=eth_ip)
+                self.add_etherbone(phy=self.ethphy, phy_cd="ethphy", ip_address=eth_ip)
 
         eth_clock_pads1 = self.platform.request("eth_clocks")
         eth_pads1 = self.platform.request("eth")
@@ -146,17 +148,30 @@ class BaseSoC(SoCCore):
 
             self.submodules.ethphy1 = LiteEthPHYRGMII(
                 clock_pads = eth_clock_pads1,
-                pads       = eth_pads1)
-            self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.ethphy1)
+                pads       = eth_pads1,
+                cd_eth_rx  = self.crg.cd_ethphy1_rx)
+            self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_rx",
+                                                "eth_tx": "ethphy1_tx",
+                                                "eth_tx_delayed": "ethphy1_tx_delayed"})(self.ethphy1)
 
             import socket
             a0, a1, a2, a3 = socket.inet_aton(eth_ip)
             eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            self.add_etherbone(name="gigabone1",
-                               phy=self.ethphy1,
-                               phy_cd="ethphy1_eth",
-                               mac_address=0x10e2d5000000+1,
-                               ip_address=eth_ip1)
+            if False:
+                self.add_etherbone(name="gigabone1",
+                                   phy=self.ethphy1,
+                                   phy_cd="ethphy1_eth",
+                                   mac_address=0x10e2d5000000+1,
+                                   ip_address=eth_ip1)
+            else:
+                # Timing constraints
+                eth_rx_clk = self.crg.cd_ethphy1_rx.clk
+                eth_tx_clk = self.crg.cd_ethphy1_tx.clk
+                self.platform.add_period_constraint(eth_rx_clk, 1e9 / self.ethphy1.rx_clk_freq)
+                self.platform.add_period_constraint(eth_tx_clk, 1e9 / self.ethphy1.tx_clk_freq)
+                self.platform.add_false_path_constraints(self.crg.cd_sys.clk, eth_rx_clk, eth_tx_clk)
+                self.platform.associate_clock_and_pad(eth_rx_clk, self.ethphy1.clock_pads.rx)
+                self.platform.associate_clock_and_pad(eth_tx_clk, self.ethphy1.clock_pads.tx)
 
         # ADC --------------------------------------------------------------------------------------
         if with_adc:
