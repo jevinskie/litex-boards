@@ -23,7 +23,7 @@ from litex.soc.cores.altera_adc import Max10ADC
 
 from liteeth.phy import LiteEthPHY
 from liteeth.phy.mii import LiteEthPHYMII
-from liteeth.phy.gmii_mii import LiteEthPHYGMIIMII
+from liteeth.phy.altera_rgmii import LiteEthPHYRGMII
 
 from litescope import LiteScopeAnalyzer
 
@@ -131,11 +131,11 @@ class BaseSoC(SoCCore):
                 self.add_etherbone(phy=self.ethphy, phy_cd="ethphy_eth", ip_address=eth_ip)
 
 
-            self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
+            # self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
             eth_clock_pads1 = self.platform.request("eth_clocks")
             eth_pads1 = self.platform.request("eth")
 
-            self.submodules.ethphy1 = LiteEthPHYMII(
+            self.submodules.ethphy1 = LiteEthPHYRGMII(
                 clock_pads = eth_clock_pads1,
                 pads       = eth_pads1)
             self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.ethphy1)
@@ -143,7 +143,6 @@ class BaseSoC(SoCCore):
             import socket
             a0, a1, a2, a3 = socket.inet_aton(eth_ip)
             eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            cd_name = self.ethphy1.crg.cd_eth_rx.name.removesuffix("_rx")
             self.add_etherbone(name="etherbone1",
                                phy=self.ethphy1,
                                phy_cd="ethphy1_eth",
@@ -170,7 +169,7 @@ class BaseSoC(SoCCore):
                 # *self.adc._signals,
             })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                depth        = 1024,
+                depth        = 256,
                 clock_domain = "sys",
                 register     = True,
                 csr_csv      = "analyzer.csv")
