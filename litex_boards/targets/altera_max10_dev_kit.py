@@ -30,7 +30,7 @@ from litescope import LiteScopeAnalyzer
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
+    def __init__(self, platform, sys_clk_freq, with_adc_pll=False):
         self.rst = Signal()
         self.clock_domains.cd_adc    = ClockDomain()
         self.clock_domains.cd_sys    = ClockDomain()
@@ -39,7 +39,6 @@ class _CRG(Module):
 
         # Clk / Rst.
         clk50 = platform.request("clk50")
-        clk10_adc = platform.request("clk10_adc")
 
         # PLL
         self.submodules.pll = pll = Max10PLL(speedgrade="-6")
@@ -47,10 +46,12 @@ class _CRG(Module):
         pll.register_clkin(clk50, 50e6)
         pll.create_clkout(self.cd_sys, sys_clk_freq)
 
-        self.submodules.pll_adc = pll_adc = Max10PLL(speedgrade="-6")
-        self.comb += pll_adc.reset.eq(self.rst)
-        pll_adc.register_clkin(clk10_adc, 10e6)
-        pll_adc.create_clkout(self.cd_adc, 10e6)  # first so it uses clkout[0]
+        if with_adc_pll:
+            clk10_adc = platform.request("clk10_adc")
+            self.submodules.pll_adc = pll_adc = Max10PLL(speedgrade="-6")
+            self.comb += pll_adc.reset.eq(self.rst)
+            pll_adc.register_clkin(clk10_adc, 10e6)
+            pll_adc.create_clkout(self.cd_adc, 10e6)  # first so it uses clkout[0]
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -100,7 +101,7 @@ class BaseSoC(SoCCore):
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+        self.submodules.crg = _CRG(platform, sys_clk_freq, with_adc_pll=with_adc)
 
         # Jtagbone ---------------------------------------------------------------------------------
         if with_jtagbone:
@@ -130,23 +131,24 @@ class BaseSoC(SoCCore):
                 self.add_etherbone(phy=self.ethphy, phy_cd="ethphy_eth", ip_address=eth_ip)
 
 
-            # self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
-            # eth_clock_pads1 = self.platform.request("eth_clocks")
-            # eth_pads1 = self.platform.request("eth")
-            #
-            # self.submodules.ethphy1 = LiteEthPHYMII(
-            #     clock_pads = eth_clock_pads1,
-            #     pads       = eth_pads1)
-            #
-            # import socket
-            # a0, a1, a2, a3 = socket.inet_aton(eth_ip)
-            # eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            # cd_name = self.ethphy1.crg.cd_eth_rx.name.removesuffix("_rx")
-            # self.add_etherbone(name="etherbone1",
-            #                    phy=self.ethphy1,
-            #                    phy_cd="ethphy1_eth",
-            #                    mac_address=0x10e2d5000000+1,
-            #                    ip_address=eth_ip1)
+            self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
+            eth_clock_pads1 = self.platform.request("eth_clocks")
+            eth_pads1 = self.platform.request("eth")
+
+            self.submodules.ethphy1 = LiteEthPHYMII(
+                clock_pads = eth_clock_pads1,
+                pads       = eth_pads1)
+            self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_eth_rx", "eth_tx": "ethphy1_eth_tx"})(self.ethphy1)
+
+            import socket
+            a0, a1, a2, a3 = socket.inet_aton(eth_ip)
+            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
+            cd_name = self.ethphy1.crg.cd_eth_rx.name.removesuffix("_rx")
+            self.add_etherbone(name="etherbone1",
+                               phy=self.ethphy1,
+                               phy_cd="ethphy1_eth",
+                               mac_address=0x10e2d5000000+1,
+                               ip_address=eth_ip1)
 
         # ADC --------------------------------------------------------------------------------------
         if with_adc:
@@ -157,15 +159,15 @@ class BaseSoC(SoCCore):
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
-                # *self.ethphy._signals,
-                # self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
+                *self.ethphy1._signals,
+                self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 # *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
                 # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
-                # eth_pads0,
-                *self.adc._signals,
+                eth_pads1,
+                # *self.adc._signals,
             })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                 depth        = 1024,
