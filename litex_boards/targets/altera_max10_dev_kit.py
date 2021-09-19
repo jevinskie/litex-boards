@@ -19,6 +19,7 @@ from litex.soc.cores.clock import Max10PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
+from litex.soc.cores.altera_adc import Max10ADC
 
 from liteeth.phy import LiteEthPHY
 from liteeth.phy.mii import LiteEthPHYMII
@@ -31,18 +32,25 @@ from litescope import LiteScopeAnalyzer
 class _CRG(Module):
     def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
         self.rst = Signal()
+        self.clock_domains.cd_adc    = ClockDomain()
         self.clock_domains.cd_sys    = ClockDomain()
 
         # # #
 
         # Clk / Rst.
         clk50 = platform.request("clk50")
+        clk10_adc = platform.request("clk10_adc")
 
         # PLL
         self.submodules.pll = pll = Max10PLL(speedgrade="-6")
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
-        pll.create_clkout(self.cd_sys,  sys_clk_freq)
+        pll.create_clkout(self.cd_sys, sys_clk_freq)
+
+        self.submodules.pll_adc = pll_adc = Max10PLL(speedgrade="-6")
+        self.comb += pll_adc.reset.eq(self.rst)
+        pll_adc.register_clkin(clk10_adc, 10e6)
+        pll_adc.create_clkout(self.cd_adc, 10e6)  # first so it uses clkout[0]
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -81,6 +89,7 @@ class BaseSoC(SoCCore):
                  eth_ip              = "192.168.43.50",
                  eth_dynamic_ip      = False,
                  with_analyzer       = False,
+                 with_adc            = False,
                  **kwargs):
         self.platform = platform = altera_max10_dev_kit.Platform()
 
@@ -105,7 +114,6 @@ class BaseSoC(SoCCore):
         if with_ethernet or with_etherbone:
             self.add_constant("USE_ALT_MODE_FOR_88E1111")
             self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR0", 0)
-            self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
             self.add_constant("ALT_MODE_FOR_88E1111", 0b1111)  # HW_CONFIG GMII
 
             eth_clock_pads0 = self.platform.request("eth_clocks")
@@ -114,43 +122,53 @@ class BaseSoC(SoCCore):
             self.submodules.ethphy = LiteEthPHYMII(
                 clock_pads = eth_clock_pads0,
                 pads       = eth_pads0)
-
-            eth_clock_pads1 = self.platform.request("eth_clocks")
-            eth_pads1 = self.platform.request("eth")
-
-            self.submodules.ethphy1 = LiteEthPHYMII(
-                clock_pads = eth_clock_pads1,
-                pads       = eth_pads1)
+            self.ethphy = ClockDomainsRenamer({"eth_rx": "ethphy_eth_rx", "eth_tx": "ethphy_eth_tx"})(self.ethphy)
 
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, phy_cd="ethphy_eth", dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
                 self.add_etherbone(phy=self.ethphy, phy_cd="ethphy_eth", ip_address=eth_ip)
 
-            import socket
-            a0, a1, a2, a3 = socket.inet_aton(eth_ip)
-            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            cd_name = self.ethphy1.crg.cd_eth_rx.name.removesuffix("_rx")
-            self.add_etherbone(name="etherbone1",
-                               phy=self.ethphy1,
-                               phy_cd="ethphy1_eth",
-                               mac_address=0x10e2d5000000+1,
-                               ip_address=eth_ip1)
+
+            # self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
+            # eth_clock_pads1 = self.platform.request("eth_clocks")
+            # eth_pads1 = self.platform.request("eth")
+            #
+            # self.submodules.ethphy1 = LiteEthPHYMII(
+            #     clock_pads = eth_clock_pads1,
+            #     pads       = eth_pads1)
+            #
+            # import socket
+            # a0, a1, a2, a3 = socket.inet_aton(eth_ip)
+            # eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
+            # cd_name = self.ethphy1.crg.cd_eth_rx.name.removesuffix("_rx")
+            # self.add_etherbone(name="etherbone1",
+            #                    phy=self.ethphy1,
+            #                    phy_cd="ethphy1_eth",
+            #                    mac_address=0x10e2d5000000+1,
+            #                    ip_address=eth_ip1)
+
+        # ADC --------------------------------------------------------------------------------------
+        if with_adc:
+            self.submodules.adc = Max10ADC(adc_num=0)
+            self.adc.do_finalize()
+            self.platform.add_false_path_constraints(self.crg.cd_sys.clk, self.crg.cd_adc.clk)
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = list({
                 # *self.ethphy._signals,
-                self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
+                # self.ethphy.crg.rx_cnt, self.ethphy.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 # *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
                 # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
-                eth_pads0,
+                # eth_pads0,
+                *self.adc._signals,
             })
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                depth        = 128,
+                depth        = 1024,
                 clock_domain = "sys",
                 register     = True,
                 csr_csv      = "analyzer.csv")
@@ -184,6 +202,7 @@ def main():
     ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
     parser.add_argument("--eth-ip",              default="192.168.43.50", type=str, help="Ethernet/Etherbone IP address")
     parser.add_argument("--eth-dynamic-ip",      action="store_true", help="Enable dynamic Ethernet IP addresses setting")
+    parser.add_argument("--with-adc",            action="store_true", help="Enable ADC and internal temperature support")
     parser.add_argument("--with-analyzer",       action="store_true", help="Enable Analyzer support")
     builder_args(parser)
     soc_core_args(parser)
@@ -208,6 +227,7 @@ def main():
         eth_ip                   = args.eth_ip,
         eth_dynamic_ip           = args.eth_dynamic_ip,
         with_analyzer            = args.with_analyzer,
+        with_adc                 = args.with_adc,
         **soc_core_argdict(args)
     )
     builder = Builder(soc, **builder_argdict(args))
