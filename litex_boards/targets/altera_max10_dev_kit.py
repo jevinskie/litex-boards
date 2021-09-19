@@ -80,7 +80,7 @@ class BareSoC(SoCCore):
 
 class BaseSoC(SoCCore):
     def __init__(self,
-                 sys_clk_freq=int(50e6),
+                 sys_clk_freq=int(125e6),
                  with_led_chaser     = True,
                  with_jtagbone       = False,
                  with_uartbone       = False,
@@ -194,7 +194,7 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream")
     parser.add_argument("--load",                action="store_true", help="Load bitstream")
-    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency (default: 50MHz)")
+    parser.add_argument("--sys-clk-freq",        default=125e6,        help="System clock frequency (default: 50MHz)")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable JTAGbone support")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable UARTbone support")
     ethopts = parser.add_mutually_exclusive_group()
