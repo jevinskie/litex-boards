@@ -30,9 +30,8 @@ from litescope import LiteScopeAnalyzer
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq, with_adc_pll=False):
+    def __init__(self, platform, sys_clk_freq, with_rgmii_pll=False, with_adc_pll=False):
         self.rst = Signal()
-        self.clock_domains.cd_adc    = ClockDomain()
         self.clock_domains.cd_sys    = ClockDomain()
 
         # # #
@@ -44,9 +43,19 @@ class _CRG(Module):
         self.submodules.pll = pll = Max10PLL(speedgrade="-6")
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk50, 50e6)
+
+        if with_rgmii_pll:
+            self.clock_domains.cd_eth_grx = ClockDomain("eth_grx")
+            self.clock_domains.cd_eth_gtx = ClockDomain("eth_gtx")
+            self.clock_domains.cd_eth_gtx_delayed = ClockDomain("eth_gtx_delayed", reset_less=True)
+            pll.create_clkout(self.cd_eth_gtx, 125e6)  # first so it uses clkout[0]
+            self.clock_domains.cd_eth_tx = ClockDomain()
+            self.clock_domains.cd_eth_tx_delayed = ClockDomain(reset_less=True)
+
         pll.create_clkout(self.cd_sys, sys_clk_freq)
 
         if with_adc_pll:
+            self.clock_domains.cd_adc = ClockDomain()
             clk10_adc = platform.request("clk10_adc")
             self.submodules.pll_adc = pll_adc = Max10PLL(speedgrade="-6")
             self.comb += pll_adc.reset.eq(self.rst)
@@ -87,6 +96,7 @@ class BaseSoC(SoCCore):
                  with_uartbone       = False,
                  with_ethernet       = False,
                  with_etherbone      = False,
+                 with_gigabone       = False,
                  eth_ip              = "192.168.43.50",
                  eth_dynamic_ip      = False,
                  with_analyzer       = False,
@@ -101,7 +111,7 @@ class BaseSoC(SoCCore):
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq, with_adc_pll=with_adc)
+        self.submodules.crg = _CRG(platform, sys_clk_freq, with_adc_pll=with_adc, with_rgmii_pll=True)
 
         # Jtagbone ---------------------------------------------------------------------------------
         if with_jtagbone:
@@ -112,13 +122,12 @@ class BaseSoC(SoCCore):
             self.add_uartbone(baudrate=3_000_000)
 
         # Ethernet
+        eth_clock_pads0 = self.platform.request("eth_clocks")
+        eth_pads0 = self.platform.request("eth")
         if with_ethernet or with_etherbone:
             self.add_constant("USE_ALT_MODE_FOR_88E1111")
             self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR0", 0)
             self.add_constant("ALT_MODE_FOR_88E1111", 0b1111)  # HW_CONFIG GMII
-
-            eth_clock_pads0 = self.platform.request("eth_clocks")
-            eth_pads0 = self.platform.request("eth")
 
             self.submodules.ethphy = LiteEthPHYMII(
                 clock_pads = eth_clock_pads0,
@@ -130,10 +139,10 @@ class BaseSoC(SoCCore):
             if with_etherbone:
                 self.add_etherbone(phy=self.ethphy, phy_cd="ethphy_eth", ip_address=eth_ip)
 
-
+        eth_clock_pads1 = self.platform.request("eth_clocks")
+        eth_pads1 = self.platform.request("eth")
+        if with_gigabone:
             # self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
-            eth_clock_pads1 = self.platform.request("eth_clocks")
-            eth_pads1 = self.platform.request("eth")
 
             self.submodules.ethphy1 = LiteEthPHYRGMII(
                 clock_pads = eth_clock_pads1,
@@ -143,7 +152,7 @@ class BaseSoC(SoCCore):
             import socket
             a0, a1, a2, a3 = socket.inet_aton(eth_ip)
             eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
-            self.add_etherbone(name="etherbone1",
+            self.add_etherbone(name="gigabone1",
                                phy=self.ethphy1,
                                phy_cd="ethphy1_eth",
                                mac_address=0x10e2d5000000+1,
@@ -199,8 +208,9 @@ def main():
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable JTAGbone support")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable UARTbone support")
     ethopts = parser.add_mutually_exclusive_group()
-    ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable Ethernet support")
-    ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable Etherbone support")
+    ethopts.add_argument("--with-ethernet",      action="store_true", help="Enable 100 Mbps Ethernet support on port A")
+    ethopts.add_argument("--with-etherbone",     action="store_true", help="Enable 100 Mbps Etherbone support on port A")
+    parser.add_argument("--with-gigabone",       action="store_true", help="Enable Gigabit Etherbone support on port B")
     parser.add_argument("--eth-ip",              default="192.168.43.50", type=str, help="Ethernet/Etherbone IP address")
     parser.add_argument("--eth-dynamic-ip",      action="store_true", help="Enable dynamic Ethernet IP addresses setting")
     parser.add_argument("--with-adc",            action="store_true", help="Enable ADC and internal temperature support")
@@ -225,6 +235,7 @@ def main():
         with_uartbone            = args.with_uartbone,
         with_ethernet            = args.with_ethernet,
         with_etherbone           = args.with_etherbone,
+        with_gigabone            = args.with_gigabone,
         eth_ip                   = args.eth_ip,
         eth_dynamic_ip           = args.eth_dynamic_ip,
         with_analyzer            = args.with_analyzer,
