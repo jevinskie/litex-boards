@@ -149,7 +149,8 @@ class BaseSoC(SoCCore):
             self.submodules.ethphy1 = LiteEthPHYRGMII(
                 clock_pads = eth_clock_pads1,
                 pads       = eth_pads1,
-                cd_eth_rx  = self.crg.cd_ethphy1_rx)
+                cd_eth_rx  = self.crg.cd_ethphy1_rx,
+                cd_eth_tx  = self.crg.cd_ethphy1_tx)
             self.ethphy1 = ClockDomainsRenamer({"eth_rx": "ethphy1_rx",
                                                 "eth_tx": "ethphy1_tx",
                                                 "eth_tx_delayed": "ethphy1_tx_delayed"})(self.ethphy1)
@@ -157,10 +158,10 @@ class BaseSoC(SoCCore):
             import socket
             a0, a1, a2, a3 = socket.inet_aton(eth_ip)
             eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2+1, a3+1]))
-            if False:
+            if True:
                 self.add_etherbone(name="gigabone1",
                                    phy=self.ethphy1,
-                                   phy_cd="ethphy1_eth",
+                                   phy_cd="ethphy1",
                                    mac_address=0x10e2d5000000+1,
                                    ip_address=eth_ip1)
             else:
@@ -186,14 +187,14 @@ class BaseSoC(SoCCore):
                 self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
-                # *self.ethcore.arp.rx._signals, *self.ethcore.arp.tx._signals,
+                *self.gigabone1_ethcore.arp.rx._signals, *self.gigabone1_ethcore.arp.tx._signals,
                 # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
-                eth_pads1,
+                *eth_pads1,
                 # *self.adc._signals,
             }
             analyzer_signals_denylist = {
-                self.ethphy1.clock_pads,
+                self.ethphy1.clock_pads, eth_pads1.tx_data, eth_pads1.tx_ctl,
             }
             analyzer_signals -= analyzer_signals_denylist
             analyzer_signals = list(analyzer_signals)

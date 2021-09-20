@@ -14,7 +14,7 @@
     <option name="ADD_SOURCE_ROOTS" value="false" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/litex_boards/targets/altera_max10_dev_kit.py" />
-    <option name="PARAMETERS" value="--cpu-type None --with-gigabone" />
+    <option name="PARAMETERS" value="--cpu-type serv --with-etherbone --with-gigabone --with-analyzer" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
