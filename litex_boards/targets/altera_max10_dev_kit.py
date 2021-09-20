@@ -195,6 +195,8 @@ class BaseSoC(SoCCore):
             }
             analyzer_signals_denylist = {
                 self.ethphy1.clock_pads, eth_pads1.tx_data, eth_pads1.tx_ctl,
+                self.gigabone1_ethcore.arp.rx.depacketizer.header,
+                self.gigabone1_ethcore.arp.tx.packetizer.header,
             }
             analyzer_signals -= analyzer_signals_denylist
             analyzer_signals = list(analyzer_signals)
