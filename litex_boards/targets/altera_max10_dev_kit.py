@@ -156,7 +156,7 @@ class BaseSoC(SoCCore):
 
             import socket
             a0, a1, a2, a3 = socket.inet_aton(eth_ip)
-            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2, a3+1]))
+            eth_ip1 = socket.inet_ntoa(bytes([a0, a1, a2+1, a3+1]))
             if False:
                 self.add_etherbone(name="gigabone1",
                                    phy=self.ethphy1,
@@ -181,7 +181,7 @@ class BaseSoC(SoCCore):
 
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
-            analyzer_signals = list({
+            analyzer_signals = {
                 *self.ethphy1._signals,
                 self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
@@ -191,7 +191,12 @@ class BaseSoC(SoCCore):
                 # eth_clock_pads,
                 eth_pads1,
                 # *self.adc._signals,
-            })
+            }
+            analyzer_signals_denylist = {
+                self.ethphy1.clock_pads,
+            }
+            analyzer_signals -= analyzer_signals_denylist
+            analyzer_signals = list(analyzer_signals)
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                 depth        = 256,
                 clock_domain = "sys",
