@@ -144,7 +144,8 @@ class BaseSoC(SoCCore):
         eth_clock_pads1 = self.platform.request("eth_clocks")
         eth_pads1 = self.platform.request("eth")
         if with_gigabone:
-            # self.add_constant("ALT_MODE_FOR_88E1111_PHYADDR1", 1)
+            self.add_constant("USE_DELAY_MODE_FOR_88E1111")
+            self.add_constant("DELAY_MODE_FOR_88E1111_PHYADDR0", 1)
 
             self.submodules.ethphy1 = LiteEthPHYRGMII(
                 clock_pads = eth_clock_pads1,
@@ -163,7 +164,9 @@ class BaseSoC(SoCCore):
                                    phy=self.ethphy1,
                                    phy_cd="ethphy1",
                                    mac_address=0x10e2d5000000+1,
-                                   ip_address=eth_ip1)
+                                   ip_address=eth_ip1,
+                                   dummy_checksum=True)
+                self.platform.toolchain.additional_qsf_commands.append("set_instance_assignment -name DUAL_PURPOSE_CLOCK_PIN_DELAY 11 -to eth_clocks_rx_1")
             else:
                 # Timing constraints
                 eth_rx_clk = self.crg.cd_ethphy1_rx.clk
@@ -187,22 +190,22 @@ class BaseSoC(SoCCore):
                 self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
-                *self.gigabone1_ethcore.arp.rx._signals, *self.gigabone1_ethcore.arp.tx._signals,
+                # *self.gigabone1_ethcore.arp.rx._signals, *self.gigabone1_ethcore.arp.tx._signals,
                 # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
-                *eth_pads1,
+                # *eth_pads1,
                 # *self.adc._signals,
             }
             analyzer_signals_denylist = {
                 self.ethphy1.clock_pads, eth_pads1.tx_data, eth_pads1.tx_ctl,
-                self.gigabone1_ethcore.arp.rx.depacketizer.header,
-                self.gigabone1_ethcore.arp.tx.packetizer.header,
+                # self.gigabone1_ethcore.arp.rx.depacketizer.header,
+                # self.gigabone1_ethcore.arp.tx.packetizer.header,
             }
             analyzer_signals -= analyzer_signals_denylist
             analyzer_signals = list(analyzer_signals)
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
                 depth        = 256,
-                clock_domain = "sys",
+                clock_domain = "ethphy1_rx",
                 register     = True,
                 csr_csv      = "analyzer.csv")
 

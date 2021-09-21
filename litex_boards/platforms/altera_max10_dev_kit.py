@@ -80,6 +80,8 @@ _io = [
      ),
     ("eth", 1,
         Subsignal("rst_n", Pins("AB4")),
+        # Subsignal("mdio", Pins("Y5")),
+        # Subsignal("mdc", Pins("Y6")),
         # Subsignal("rx_dv", Pins("R1")),
         Subsignal("rx_ctl", Pins("R1")),
         Subsignal("rx_er", Pins("R2")),
@@ -389,6 +391,6 @@ class Platform(AlteraPlatform):
         AlteraPlatform.do_finalize(self, fragment)
         # self.add_period_constraint(self.lookup_request("clk50", loose=True), 1e9/50e6)
         # Generate PLL clock in STA
-        self.toolchain.additional_sdc_commands.append("derive_pll_clocks -create_base_clocks -use_net_name")
+        # self.toolchain.additional_sdc_commands.append("derive_pll_clocks -create_base_clocks -use_net_name")
         # Calculates clock uncertainties
-        self.toolchain.additional_sdc_commands.append("derive_clock_uncertainty")
+        # self.toolchain.additional_sdc_commands.append("derive_clock_uncertainty")
