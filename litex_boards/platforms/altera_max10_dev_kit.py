@@ -49,6 +49,12 @@ _io = [
      ),
 
     # RGMII Ethernet running at 100 mbit
+    # MDIO
+    ("eth_mdio", 0,
+        Subsignal("mdio", Pins("Y5")),
+        Subsignal("mdc", Pins("Y6")),
+    ),
+
     # Port 0 / A (bottom jack)
     ("eth_clocks", 0,
         Subsignal("tx", Pins("E10"), IOStandard("3.3-V LVCMOS")),
@@ -58,8 +64,8 @@ _io = [
      ),
     ("eth", 0,
          Subsignal("rst_n", Pins("V8")),
-         Subsignal("mdio", Pins("Y5")),
-         Subsignal("mdc", Pins("Y6")),
+         # Subsignal("mdio", Pins("Y5")),
+         # Subsignal("mdc", Pins("Y6")),
          Subsignal("rx_dv", Pins("T2")),
          Subsignal("rx_er", Pins("U2")),
          Subsignal("rx_data", Pins("N9 T1 N1 T3")),
