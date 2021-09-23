@@ -63,18 +63,19 @@ _io = [
         IOStandard("2.5 V")
      ),
     ("eth", 0,
-         Subsignal("rst_n", Pins("V8")),
-         # Subsignal("mdio", Pins("Y5")),
-         # Subsignal("mdc", Pins("Y6")),
-         Subsignal("rx_dv", Pins("T2")),
-         Subsignal("rx_er", Pins("U2")),
-         Subsignal("rx_data", Pins("N9 T1 N1 T3")),
-         Subsignal("tx_en", Pins("R4")),
-         Subsignal("tx_er", Pins("P4")),
-         Subsignal("tx_data", Pins("R5 P5 W1 W2")),
-         Subsignal("col", Pins("P1")),
-         Subsignal("crs", Pins("N8")),
-         IOStandard("2.5 V")
+        Subsignal("rst_n", Pins("V8")),
+        # Subsignal("mdio", Pins("Y5")),
+        # Subsignal("mdc", Pins("Y6")),
+        Subsignal("rx_dv", Pins("T2")),
+        # Subsignal("rx_ctl", Pins("T2")),
+        Subsignal("rx_er", Pins("U2")),
+        Subsignal("rx_data", Pins("N9 T1 N1 T3")),
+        Subsignal("tx_en", Pins("R4")),
+        Subsignal("tx_er", Pins("P4")),
+        Subsignal("tx_data", Pins("R5 P5 W1 W2")),
+        Subsignal("col", Pins("P1")),
+        Subsignal("crs", Pins("N8")),
+        IOStandard("2.5 V")
     ),
 
     # Port 1 / B (top jack)
@@ -101,16 +102,24 @@ _io = [
         IOStandard("2.5 V")
     ),
 
+    ("eth_other", 0,
+        Subsignal("eneta_gtx", Pins("T5")),
+        Subsignal("eneta_intn", Pins("V7")),
+        Subsignal("eneta_led_link100", Pins("R9")),
+        Subsignal("enetb_intn", Pins("AA3")),
+        Subsignal("enetb_led_link100", Pins("P9")),
+        IOStandard("2.5 V")
+    ),
 
     # Port 0 (top/bottom?)
-    ("eneta_gtx_clk", 0, Pins("T5"), IOStandard("2.5 V")),
-    ("eneta_intn", 0, Pins("V7"), IOStandard("2.5 V")),
-    ("eneta_led_link100", 0, Pins("R9"), IOStandard("2.5 V")),
+    # ("eneta_gtx_clk", 0, Pins("T5"), IOStandard("2.5 V")),
+    # ("eneta_intn", 0, Pins("V7"), IOStandard("2.5 V")),
+    # ("eneta_led_link100", 0, Pins("R9"), IOStandard("2.5 V")),
 
     # Port 1 (top/bottom?)
-    ("enetb_gtx_clk", 0, Pins("T6"), IOStandard("2.5 V")),
-    ("enetb_intn", 0, Pins("AA3"), IOStandard("2.5 V")),
-    ("enetb_led_link100", 0, Pins("P9"), IOStandard("2.5 V")),
+    # ("enetb_gtx_clk", 0, Pins("T6"), IOStandard("2.5 V")),
+    # ("enetb_intn", 0, Pins("AA3"), IOStandard("2.5 V")),
+    # ("enetb_led_link100", 0, Pins("P9"), IOStandard("2.5 V")),
 
     ("usb_clk", 0, Pins("H11"), IOStandard("3.3-V LVCMOS")),
     ("usb_wrn", 0, Pins("D14"), IOStandard("3.3-V LVCMOS")),

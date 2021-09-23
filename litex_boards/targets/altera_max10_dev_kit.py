@@ -128,6 +128,7 @@ class BaseSoC(SoCCore):
         self.submodules.mdio = LiteEthPHYMDIO(self.platform.request("eth_mdio"))
 
         # Ethernet
+        eth_other = self.platform.request("eth_other")  # make sure all PHY pads are included to get the IO levels right
         eth_clock_pads0 = self.platform.request("eth_clocks")
         eth_pads0 = self.platform.request("eth")
         if with_ethernet or with_etherbone:
@@ -171,7 +172,7 @@ class BaseSoC(SoCCore):
                                    ip_address=eth_ip1,
                                    dummy_checksum=True)
                 self.platform.toolchain.additional_qsf_commands.append('''
-set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_clocks_rx_1
+# set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_clocks_rx_1
 set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_ctl
 set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[0]
 set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[1]
@@ -181,35 +182,111 @@ set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[3]
                 self.platform.toolchain.additional_sdc_commands.append('''
 # set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -13.5 [get_nodes {eth_clocks_rx_1}]
 
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_ctl}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_ctl}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_ctl}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_ctl}]
-
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[0]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[0]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[0]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[0]}]
-
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[1]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[1]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[1]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[1]}]
-
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[2]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[2]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[2]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[2]}]
-
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[3]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[3]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[3]}]
-set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[3]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_ctl}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_ctl}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_ctl}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_ctl}]
+# 
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[0]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[0]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[0]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[0]}]
+# 
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[1]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[1]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[1]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[1]}]
+# 
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[2]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[2]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[2]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[2]}]
+# 
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -max -1.4 [get_ports {eth_rx_data_1[3]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -min -2.8 [get_ports {eth_rx_data_1[3]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -max -1.4 [get_ports {eth_rx_data_1[3]}]
+# set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -clock_fall -min -2.8 [get_ports {eth_rx_data_1[3]}]
 
 # Ethernet MDIO interface
 # set_output_delay  -clock [ get_clocks clk_50_max10 ] 2   [ get_ports {enet_mdc} ]
 # set_input_delay   -clock [ get_clocks clk_50_max10 ] 2   [ get_ports {enet_mdio} ]
 # set_output_delay  -clock [ get_clocks clk_50_max10 ] 2   [ get_ports {enet_mdio} ]
+
+
+
+#
+# This file is intended to be sourced from a top.sdc
+# It contains references to TCL variables that are defined in the top.sdc
+#
+
+post_message -type info "Reading file: \'rgmii_clocks.sdc\'"
+
+# Create the external virtual PHY clock
+create_clock \
+    -name virtual_phy_clk \
+    -period 8.0
+
+
+#
+# This file is intended to be sourced from a top.sdc
+#
+
+post_message -type info "Reading file: \'rgmii_input.sdc\'"
+
+#**************************************************************
+# Input Delay Constraints (Center aligned, Same Edge Analysis)
+#**************************************************************
+set Tco_max 0.5
+set Tco_min -0.5
+set Td_max 0.4
+set Td_min 0.0
+set longest_src_clk 0.0
+set shortest_src_clk 0.0
+set longest_dest_clk 0.4
+set shortest_dest_clk 0.0
+
+set Tcs_largest [expr $shortest_dest_clk - $longest_src_clk]
+set Tcs_smallest [expr $longest_dest_clk - $shortest_src_clk]
+
+set IMD [expr $Td_max + $Tco_max - $Tcs_largest]
+post_message -type info "Input Max Delay = $IMD"
+set ImD [expr $Td_min + $Tco_min - $Tcs_smallest]
+post_message -type info "Input Min Delay = $ImD"
+
+# Constraint the path to the rising edge of the phy clock
+set_input_delay -add_delay -clock virtual_phy_clk -max $IMD [get_ports {eth_rx_ctl eth_rx_data_1*}]
+set_input_delay -add_delay -clock virtual_phy_clk -min $ImD [get_ports {eth_rx_ctl eth_rx_data_1*}]
+
+# Constraint the path to the falling edge of the phy clock
+set_input_delay -add_delay -clock virtual_phy_clk -max -clock_fall $IMD [get_ports {eth_rx_ctl eth_rx_data_1*}]
+set_input_delay -add_delay -clock virtual_phy_clk -min -clock_fall $ImD [get_ports {eth_rx_ctl eth_rx_data_1*}]
+
+# On a same edge capture DDR interface the paths from RISE to FALL and
+# from FALL to RISE on not valid for setup analysis
+set_false_path \
+    -setup \
+    -rise_from [get_clocks {virtual_phy_clk}] \
+    -fall_to [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]
+
+set_false_path \
+    -setup \
+    -fall_from [get_clocks {virtual_phy_clk}] \
+    -rise_to [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]
+
+# On a same edge capture DDR interface the paths from RISE to RISE and
+# FALL to FALL are not avlid for hold analysis
+set_false_path \
+    -hold \
+    -rise_from [get_clocks {virtual_phy_clk}] \
+    -rise_to [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]
+
+set_false_path \
+    -hold \
+    -fall_from [get_clocks {virtual_phy_clk}] \
+    -fall_to [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]
+
+
+
 ''')
 
             else:
