@@ -171,12 +171,12 @@ class BaseSoC(SoCCore):
                                    mac_address=0x10e2d5000000+1,
                                    ip_address=eth_ip1)
                 self.platform.toolchain.additional_qsf_commands.append('''
-# set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_clocks_rx_1
-# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_ctl
-# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[0]
-# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[1]
-# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[2]
-# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[3]
+set_instance_assignment -name DUAL_PURPOSE_CLOCK_PIN_DELAY 8 -to eth_clocks_rx_1
+set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_rx_ctl
+set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_rx_data_1[0]
+set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_rx_data_1[1]
+set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_rx_data_1[2]
+set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_rx_data_1[3]
 ''')
                 self.platform.toolchain.additional_sdc_commands.append('''
 # set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -13.5 [get_nodes {eth_clocks_rx_1}]
