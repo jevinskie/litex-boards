@@ -3,44 +3,46 @@
 #
 # This file is part of LiteX-Boards.
 #
-# Copyright (c) 2015-2019 Florent Kermarrec <florent@enjoy-digital.fr>,
-# Copyright (c) 2020 Staf Verhaegen <staf@fibraservi.eu>
+# Copyright (c) 2021 Nathaniel Lewis <github@nrlewis.dev>
 # SPDX-License-Identifier: BSD-2-Clause
 
 import os
 import argparse
+import sys
 
 from migen import *
 
-from litex_boards.platforms import arty_s7
+from litex_boards.platforms import alchitry_au
 from litex.build.xilinx.vivado import vivado_build_args, vivado_build_argdict
 
-from litex.soc.cores.clock import *
+from litex.soc.interconnect.csr import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
+
+from litex.soc.cores.clock import *
 from litex.soc.cores.led import LedChaser
 
-from litedram.modules import MT41K128M16
+from litedram.modules import AS4C128M16
 from litedram.phy import s7ddrphy
 
 # CRG ----------------------------------------------------------------------------------------------
 
-class _CRG(Module):
+class CRG(Module):
     def __init__(self, platform, sys_clk_freq):
         self.rst = Signal()
         self.clock_domains.cd_sys       = ClockDomain()
-        self.clock_domains.cd_sys2x     = ClockDomain(reset_less=True)
         self.clock_domains.cd_sys4x     = ClockDomain(reset_less=True)
         self.clock_domains.cd_sys4x_dqs = ClockDomain(reset_less=True)
         self.clock_domains.cd_idelay    = ClockDomain()
 
-        # # #
+        # Clk/Rst
+        clk100 = platform.request("clk100")
 
-        self.submodules.pll = pll = S7PLL(speedgrade=-1)
+        # PLL
+        self.submodules.pll = pll = S7PLL()
         self.comb += pll.reset.eq(~platform.request("cpu_reset") | self.rst)
-        pll.register_clkin(platform.request("clk100"), 100e6)
+        pll.register_clkin(clk100, 100e6)
         pll.create_clkout(self.cd_sys,       sys_clk_freq)
-        pll.create_clkout(self.cd_sys2x,     2*sys_clk_freq)
         pll.create_clkout(self.cd_sys4x,     4*sys_clk_freq)
         pll.create_clkout(self.cd_sys4x_dqs, 4*sys_clk_freq, phase=90)
         pll.create_clkout(self.cd_idelay,    200e6)
@@ -48,38 +50,39 @@ class _CRG(Module):
 
         self.submodules.idelayctrl = S7IDELAYCTRL(self.cd_idelay)
 
-# BaseSoC ------------------------------------------------------------------------------------------
+# BaseSoC -----------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, variant="s7-50", sys_clk_freq=int(100e6), with_spi_flash=False, with_led_chaser=True, **kwargs):
-        platform = arty_s7.Platform(variant=variant)
+    def __init__(self, variant="au", sys_clk_freq=int(83333333), with_spi_flash=False, with_led_chaser=True, **kwargs):
+        platform = alchitry_au.Platform(variant=variant)
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
-            ident          = "LiteX SoC on Arty S7",
+            ident          = "LiteX SoC on Alchitry Au(+)",
             ident_version  = True,
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = _CRG(platform, sys_clk_freq)
+        self.submodules.crg = CRG(platform, sys_clk_freq)
 
         # DDR3 SDRAM -------------------------------------------------------------------------------
         if not self.integrated_main_ram_size:
             self.submodules.ddrphy = s7ddrphy.A7DDRPHY(platform.request("ddram"),
-                memtype        = "DDR3",
-                nphases        = 4,
-                sys_clk_freq   = sys_clk_freq)
+                memtype          = "DDR3",
+                nphases          = 4,
+                sys_clk_freq     = sys_clk_freq,
+                iodelay_clk_freq = 200e6)
             self.add_sdram("sdram",
                 phy           = self.ddrphy,
-                module        = MT41K128M16(sys_clk_freq, "1:4"),
+                module        = AS4C128M16(sys_clk_freq, "1:4"),
                 l2_cache_size = kwargs.get("l2_size", 8192)
             )
 
         # SPI Flash --------------------------------------------------------------------------------
         if with_spi_flash:
-            from litespi.modules import S25FL128S
+            from litespi.modules import SST26VF032B
             from litespi.opcodes import SpiNorFlashOpCodes as Codes
-            self.add_spi_flash(mode="4x", module=S25FL128S(Codes.READ_1_1_4), with_master=True)
+            self.add_spi_flash(mode="4x", module=SST26VF032B(Codes.READ_1_1_1), with_master=True)
 
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
@@ -90,12 +93,13 @@ class BaseSoC(SoCCore):
 # Build --------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="LiteX SoC on Arty S7")
-    parser.add_argument("--build",          action="store_true", help="Build bitstream")
-    parser.add_argument("--load",           action="store_true", help="Load bitstream")
-    parser.add_argument("--variant",        default="s7-50",     help="Board variant: s7-50 (default) or s7-25")
-    parser.add_argument("--sys-clk-freq",   default=100e6,       help="System clock frequency (default: 100MHz)")
-    parser.add_argument("--with-spi-flash", action="store_true", help="Enable SPI Flash (MMAPed)")
+    parser = argparse.ArgumentParser(description="LiteX SoC on Alchitry Au(+)")
+    parser.add_argument("--build",           action="store_true", help="Build bitstream")
+    parser.add_argument("--load",            action="store_true", help="Load bitstream")
+    parser.add_argument("--flash",           action="store_true", help="Flash bitstream")
+    parser.add_argument("--variant",         default="au",        help="Board variant: au (default) or au+")
+    parser.add_argument("--sys-clk-freq",    default=83333333,    help="System clock frequency (default: 83.333333 MHz)")
+    parser.add_argument("--with-spi-flash",  action="store_true", help="Enable SPI Flash (MMAPed)")
     builder_args(parser)
     soc_core_args(parser)
     vivado_build_args(parser)
@@ -107,12 +111,17 @@ def main():
         with_spi_flash = args.with_spi_flash,
         **soc_core_argdict(args)
     )
+
     builder = Builder(soc, **builder_argdict(args))
     builder.build(**vivado_build_argdict(args), run=args.build)
 
     if args.load:
         prog = soc.platform.create_programmer()
         prog.load_bitstream(os.path.join(builder.gateware_dir, soc.build_name + ".bit"))
+
+    if args.flash:
+        prog = soc.platform.create_programmer()
+        prog.flash(0, os.path.join(builder.gateware_dir, soc.build_name + ".bin"))
 
 if __name__ == "__main__":
     main()

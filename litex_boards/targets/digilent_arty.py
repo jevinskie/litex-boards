@@ -57,7 +57,6 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    mem_map = {**SoCCore.mem_map, **{"spiflash": 0x80000000}}
     def __init__(self, variant="a7-35", toolchain="vivado", sys_clk_freq=int(100e6),
                  with_ethernet=False, with_etherbone=False, eth_ip="192.168.1.50",
                  eth_dynamic_ip=False, ident_version=True, with_led_chaser=True, with_jtagbone=True,
@@ -103,7 +102,7 @@ class BaseSoC(SoCCore):
         if with_spi_flash:
             from litespi.modules import S25FL128L
             from litespi.opcodes import SpiNorFlashOpCodes as Codes
-            self.add_spi_flash(mode="4x", module=S25FL128L(Codes.READ_1_1_4), with_master=True)
+            self.add_spi_flash(mode="4x", module=S25FL128L(Codes.READ_1_1_4), rate="1:2", with_master=True)
 
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
