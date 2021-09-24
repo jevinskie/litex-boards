@@ -169,15 +169,14 @@ class BaseSoC(SoCCore):
                                    phy=self.ethphy1,
                                    phy_cd="ethphy1",
                                    mac_address=0x10e2d5000000+1,
-                                   ip_address=eth_ip1,
-                                   dummy_checksum=True)
+                                   ip_address=eth_ip1)
                 self.platform.toolchain.additional_qsf_commands.append('''
 # set_instance_assignment -name PAD_TO_CORE_DELAY 6 -to eth_clocks_rx_1
-set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_ctl
-set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[0]
-set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[1]
-set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[2]
-set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[3]
+# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_ctl
+# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[0]
+# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[1]
+# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[2]
+# set_instance_assignment -name PAD_TO_CORE_DELAY 0 -to eth_rx_data_1[3]
 ''')
                 self.platform.toolchain.additional_sdc_commands.append('''
 # set_input_delay -add_delay  -clock [get_clocks {main_ethphy1_clkbuf_cd_ethphy1_rx_clk_out}]  -13.5 [get_nodes {eth_clocks_rx_1}]
@@ -238,11 +237,11 @@ post_message -type info "Reading file: \'rgmii_input.sdc\'"
 #**************************************************************
 set Tco_max 0.5
 set Tco_min -0.5
-set Td_max 0.4
+set Td_max 0.0
 set Td_min 0.0
 set longest_src_clk 0.0
 set shortest_src_clk 0.0
-set longest_dest_clk 0.4
+set longest_dest_clk 0.0
 set shortest_dest_clk 0.0
 
 set Tcs_largest [expr $shortest_dest_clk - $longest_src_clk]
@@ -308,8 +307,10 @@ set_false_path \
         # Analyzer ---------------------------------------------------------------------------------
         if with_analyzer:
             analyzer_signals = {
-                *self.ethphy1._signals,
-                self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
+                # *self.ethphy1._signals,
+                self.ethphy1.rx.source,
+                self.ethphy1.tx.sink,
+                # self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 # *self.gigabone1_ethcore.arp.rx._signals, *self.gigabone1_ethcore.arp.tx._signals,
