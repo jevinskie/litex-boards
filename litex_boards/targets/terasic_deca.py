@@ -52,13 +52,16 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(50e6), with_led_chaser=True, with_video_terminal=False,
+    def __init__(self, sys_clk_freq=int(50e6), with_led_chaser=True, with_jtagbone=False, with_video_terminal=False,
                  **kwargs):
         self.platform = platform = deca.Platform()
 
         # Defaults to JTAG-UART since no hardware UART.
         if kwargs["uart_name"] == "serial":
-            kwargs["uart_name"] = "jtag_atlantic"
+            if with_jtagbone:
+                kwargs["uart_name"] = "crossover"
+            else:
+                kwargs["uart_name"] = "jtag_atlantic"
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
@@ -67,6 +70,10 @@ class BaseSoC(SoCCore):
 
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+
+        # JTAGbone ---------------------------------------------------------------------------------
+        if with_jtagbone:
+            self.add_jtagbone()
 
         # Video ------------------------------------------------------------------------------------
         if with_video_terminal:
@@ -86,6 +93,7 @@ def main():
     parser.add_argument("--build",               action="store_true", help="Build bitstream.")
     parser.add_argument("--load",                action="store_true", help="Load bitstream.")
     parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency.")
+    parser.add_argument("--with-jtagbone",       action="store_true", help="Enable JTAGbone support.")
     parser.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA).")
     builder_args(parser)
     soc_core_args(parser)
@@ -93,6 +101,7 @@ def main():
 
     soc = BaseSoC(
         sys_clk_freq             = int(float(args.sys_clk_freq)),
+        with_jtagbone            = args.with_jtagbone,
         with_video_terminal      = args.with_video_terminal,
         **soc_core_argdict(args)
     )
