@@ -17,7 +17,34 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.video import VideoDVIPHY
 from litex.soc.cores.led import LedChaser
-from litex.soc.cores.bitbang import I2CMaster
+
+from litescope import LiteScopeAnalyzer
+from migen.genlib.cdc import AsyncResetSynchronizer
+from litex.soc.cores.jtag import JTAGPHY, MAX10JTAG, JTAGTAPFSM
+
+import litex.gen.fhdl.migen_addons
+
+class JTAGHello(Module):
+    def __init__(self, tms: Signal, tck: Signal, tdi: Signal, tdo: Signal, rst: Signal, phy: Module):
+        self.hello_dr = hello_dr = Signal(32, reset=0xAA00FF55)
+
+        # self.comb += tdo.eq(hello_dr[0])
+        self.hello_inner_tdo = hello_inner_tdo = Signal()
+        self.comb += tdo.eq(hello_inner_tdo)
+
+        self.sync.jtag += [
+            If(phy.reset | phy.capture,
+                hello_dr.eq(hello_dr.reset),
+            ).Elif(phy.shift,
+                hello_dr.eq(Cat(hello_dr[1:], tdi)),
+            ),
+        ]
+
+        self.comb += hello_inner_tdo.eq(hello_dr[0])
+        # self.sync.jtag_inv += hello_inner_tdo.eq(hello_dr[0])
+
+        # # #
+
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -82,6 +109,20 @@ class BaseSoC(SoCCore):
         # JTAGbone ---------------------------------------------------------------------------------
         if with_jtagbone:
             self.add_jtagbone()
+        else:
+            # JTAG Hello ---------------------------------------------------------------------------
+            platform.add_reserved_jtag_decls()
+            reserved_pads = platform.get_reserved_jtag_pads()
+            self.submodules.jtag_phy = MAX10JTAG(chain=1, reserved_pads=reserved_pads)
+
+            self.clock_domains.cd_jtag = ClockDomain()
+            self.comb += ClockSignal("jtag").eq(self.jtag_phy.tck)
+            self.specials += AsyncResetSynchronizer(self.cd_jtag, ResetSignal("sys"))
+
+            self.hello_tdo = hello_tdo = Signal()
+            self.submodules.jtag_hello = JTAGHello(self.jtag_phy.tms, self.jtag_phy.tck, self.jtag_phy.tdi,
+                                                   hello_tdo, ResetSignal("sys"), self.jtag_phy)
+            self.comb += self.jtag_phy.tdo.eq(hello_tdo)
 
         # Video ------------------------------------------------------------------------------------
         if with_video_terminal:
@@ -94,13 +135,28 @@ class BaseSoC(SoCCore):
                 pads         = platform.request_all("user_led"),
                 sys_clk_freq = sys_clk_freq)
 
+        if True:
+            analyzer_signals = set([
+                *self.jtagbone_phy.jtag._signals(recurse=True),
+                # *self.jtag_phy._signals(recurse=True),
+                # *self.jtag_hello._signals(recurse=True),
+            ])
+            analyzer_signals -= set([self.jtagbone_phy.jtag.altera_reserved_tdo])
+            # analyzer_signals -= set([self.jtag_phy.altera_reserved_tdo])
+            print(f"analyzer_signals: {analyzer_signals}")
+            self.submodules.analyzer = LiteScopeAnalyzer(list(analyzer_signals),
+                                                         depth          = 256,
+                                                         register       = True,
+                                                         clock_domain   = "sys",
+                                                         csr_csv        = "analyzer.csv")
+
 # Build --------------------------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on DECA")
     parser.add_argument("--build",               action="store_true", help="Build bitstream.")
     parser.add_argument("--load",                action="store_true", help="Load bitstream.")
-    parser.add_argument("--sys-clk-freq",        default=50e6,        help="System clock frequency.")
+    parser.add_argument("--sys-clk-freq",        default=100e6,        help="System clock frequency.")
     parser.add_argument("--with-uartbone",       action="store_true", help="Enable UARTbone support.")
     parser.add_argument("--with-jtagbone",       action="store_true", help="Enable JTAGbone support.")
     parser.add_argument("--with-video-terminal", action="store_true", help="Enable Video Terminal (VGA).")
