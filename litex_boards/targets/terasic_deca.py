@@ -18,8 +18,6 @@ from litex.soc.integration.builder import *
 from litex.soc.cores.video import VideoDVIPHY
 from litex.soc.cores.led import LedChaser
 
-import litex.gen.fhdl.migen_addons
-
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
