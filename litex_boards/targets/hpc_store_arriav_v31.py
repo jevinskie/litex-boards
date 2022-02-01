@@ -10,6 +10,7 @@ import os
 import argparse
 
 from migen import *
+from litex.gen.fhdl.utils import get_signals
 from litex_boards.platforms import hpc_store_arriav_v31 as arriav_board
 
 from litex.soc.cores.clock import ArriaVPLL
@@ -21,6 +22,8 @@ from litex.soc.cores.led import LedChaser
 from litex.config import DEFAULT_IP_PREFIX
 
 from liteeth.phy.mii import LiteEthPHYMII
+from liteeth.phy.gmii import LiteEthPHYGMII
+from liteeth.phy.gmii_mii import LiteEthPHYGMIIMII
 
 from litescope.core import LiteScopeAnalyzer
 
@@ -65,17 +68,19 @@ class BaseSoC(SoCCore):
         # Ethernet ---------------------------------------------------------------------------------
         if with_ethernet or with_etherbone:
             self.platform.toolchain.additional_sdc_commands += [
-                # 'create_clock -name eth_rx_clk -period 40.0 [get_ports {eth_clocks_rx}]',
-                # 'create_clock -name eth_tx_clk -period 40.0 [get_ports {eth_clocks_tx}]',
-                # 'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
-                # 'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
-                # 'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
+                'create_clock -name eth_rx_clk -period 8.0 [get_ports {eth_clocks_rx}]',
+                'create_clock -name eth_tx_clk -period 8.0 [get_ports {eth_clocks_tx}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_rx_clk}]',
+                'set_false_path -from [get_clocks {sys_clk}] -to [get_clocks {eth_tx_clk}]',
+                'set_false_path -from [get_clocks {eth_rx_clk}] -to [get_clocks {eth_tx_clk}]',
             ]
             eth_clock_pads = self.platform.request("eth_clocks")
             eth_pads = self.platform.request("eth")
-            self.submodules.ethphy = LiteEthPHYMII(
+            self.submodules.ethphy = LiteEthPHYGMII(
                 clock_pads = eth_clock_pads,
-                pads       = eth_pads)
+                pads       = eth_pads,
+                # clk_freq   = self.sys_clk_freq,
+            )
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip)
             if with_etherbone:
@@ -83,10 +88,13 @@ class BaseSoC(SoCCore):
 
         # UARTbone ---------------------------------------------------------------------------------
         if with_uartbone:
-            self.add_uartbone(name=real_uart_name, baudrate=kwargs["uart_baudrate"])
+            self.add_uartbone(name=kwargs["uart_name"], baudrate=kwargs["uart_baudrate"])
 
         # JTAGbone ---------------------------------------------------------------------------------
         if with_jtagbone:
+            self.platform.toolchain.additional_sdc_commands += [
+                'create_clock -name jtag -period 30.0 [get_ports {altera_reserved_tck}]',
+            ]
             self.add_jtagbone()
 
         # Leds -------------------------------------------------------------------------------------
@@ -101,23 +109,26 @@ class BaseSoC(SoCCore):
             dbg_gtx_clk = Signal(8)
             self.sync.eth_tx += dbg_tx_clk.eq(dbg_tx_clk + 1)
             self.sync.eth_rx += dbg_rx_clk.eq(dbg_rx_clk + 1)
-            self.clock_domains.cd_eth_gtx = ClockDomain()
-            self.comb += ClockSignal("eth_gtx").eq(eth_clock_pads.gtx)
-            self.sync.eth_gtx += dbg_gtx_clk.eq(dbg_gtx_clk + 1)
+            # self.clock_domains.cd_eth_gtx = ClockDomain()
+            # self.comb += ClockSignal("eth_gtx").eq(eth_clock_pads.gtx)
+            # self.sync.eth_gtx += dbg_gtx_clk.eq(dbg_gtx_clk + 1)
 
             analyzer_signals = {
                 # *self.ethphy1._signals,
-                # self.ethphy.rx.source,
-                # self.ethphy.tx.sink,
+                self.ethphy.rx.source,
+                self.ethphy.tx.sink,
                 # self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
                 # *self.gigabone1_ethcore.arp.rx._signals, *self.gigabone1_ethcore.arp.tx._signals,
                 # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
-                # eth_pads,
-                eth_pads.mdio, eth_pads.mdc,
-                # dbg_tx_clk, dbg_rx_clk,
+                # self.ethphy.mode_detection.mode,
+                *get_signals(self.ethcore_etherbone.mac.core),
+                *get_signals(self.ethcore_etherbone.arp.rx), *get_signals(self.ethcore_etherbone.arp.tx),
+                eth_pads,
+                # eth_pads.mdio, eth_pads.mdc,
+                dbg_tx_clk, dbg_rx_clk,
                 # dbg_gtx_clk,
                 # *self.adc._signals,
             }
@@ -130,9 +141,11 @@ class BaseSoC(SoCCore):
             analyzer_signals -= analyzer_signals_denylist
             analyzer_signals = list(analyzer_signals)
             self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                depth        = 1024*16,
-                clock_domain = "sys",
+                depth        = 256*1,
                 register     = True,
+                # clock_domain = "eth_rx",
+                # samplerate   = int(125e6),
+                clock_domain = "sys",
                 samplerate   = sys_clk_freq,
                 csr_csv      = "analyzer.csv")
 
