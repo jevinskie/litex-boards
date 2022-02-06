@@ -103,7 +103,7 @@ class BaseSoC(SoCCore):
                 pads         = platform.request_all("user_led"),
                 sys_clk_freq = sys_clk_freq)
 
-        if True:
+        if False:
             dbg_tx_clk = Signal(8)
             dbg_rx_clk = Signal(8)
             dbg_gtx_clk = Signal(8)
@@ -115,8 +115,8 @@ class BaseSoC(SoCCore):
 
             analyzer_signals = {
                 # *self.ethphy1._signals,
-                self.ethphy.rx.source,
-                self.ethphy.tx.sink,
+                # self.ethphy.rx.source,
+                # self.ethphy.tx.sink,
                 # self.ethphy1.crg.rx_cnt, self.ethphy1.crg.tx_cnt,
                 # *self.ethphy._signals_recursive,
                 # *self.ethcore.icmp.echo._signals, *self.ethcore.icmp.rx._signals, *self.ethcore.icmp.tx._signals,
@@ -124,8 +124,8 @@ class BaseSoC(SoCCore):
                 # *self.ethcore.mac.core._signals,
                 # eth_clock_pads,
                 # self.ethphy.mode_detection.mode,
-                *get_signals(self.ethcore_etherbone.mac.core),
-                *get_signals(self.ethcore_etherbone.arp.rx), *get_signals(self.ethcore_etherbone.arp.tx),
+                # *get_signals(self.ethcore_etherbone.mac.core),
+                # *get_signals(self.ethcore_etherbone.arp.rx), *get_signals(self.ethcore_etherbone.arp.tx),
                 eth_pads,
                 # eth_pads.mdio, eth_pads.mdc,
                 dbg_tx_clk, dbg_rx_clk,
