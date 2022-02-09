@@ -29,6 +29,12 @@ def qsf_to_pins(qsf_path: str):
     for l in lines:
         # print(l)
         l = shlex.split(l, comments=True)
+        try:
+            tgidx = l.index("-tag")
+            del l[tgidx]
+            del l[tgidx]
+        except ValueError:
+            pass
         if (
             len(l) == 4
             and l[0] == "set_location_assignment"
@@ -76,13 +82,15 @@ def qsf_to_pins(qsf_path: str):
             pin_name_orig = l[5]
             misc_key = l[2]
             misc_val = l[3]
+            if pin_name_orig not in pins:
+                continue
             if "misc" not in pins[pin_name_orig]:
                 pins[pin_name_orig]["misc"] = {}
             pins[pin_name_orig]["misc"][misc_key] = misc_val
         else:
             if len(l) > 0:
                 print(f'unhandled: {" ".join(l)}')
-                pass
+                continue
 
     # post process arrays and subsignals
     pin_arrays = {}
