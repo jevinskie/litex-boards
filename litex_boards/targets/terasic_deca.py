@@ -108,8 +108,8 @@ class BaseSoC(SoCCore):
             self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi")
 
         # Chip ID ----------------------------------------------------------------------------------
-        # self.submodules.chipid = AlteraChipID()
-        self.submodules.chipid = AlteraChipIDIP(self.platform)
+        self.submodules.chipid = AlteraChipID()
+        # self.submodules.chipid = AlteraChipIDIP(self.platform)
         self.chipid.finalize()
 
 
