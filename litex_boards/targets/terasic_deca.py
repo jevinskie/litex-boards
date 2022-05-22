@@ -24,7 +24,7 @@ from liteeth.phy.mii import LiteEthPHYMII
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq, with_usb_pll=False):
+    def __init__(self, platform, sys_clk_freq, with_usb_pll=False, ulpi=None):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
         self.clock_domains.cd_hdmi   = ClockDomain()
@@ -44,12 +44,13 @@ class _CRG(Module):
 
         # USB PLL.
         if with_usb_pll:
-            ulpi  = platform.request("ulpi")
+            ulpi = ulpi or platform.request("ulpi")
             self.comb += ulpi.cs.eq(1) # Enable ULPI chip to enable the ULPI clock.
-            self.submodules.usb_pll = pll = Max10PLL(speedgrade="-6")
-            self.comb += pll.reset.eq(self.rst)
-            pll.register_clkin(ulpi.clk, 60e6)
-            pll.create_clkout(self.cd_usb, 60e6, phase=-120) # -120° from DECA's example (also validated with LUNA).
+            self.submodules.usb_pll = usb_pll = Max10PLL(speedgrade="-6")
+            self.comb += usb_pll.reset.eq(self.rst)
+            usb_pll.register_clkin(ulpi.clk, 60e6)
+            usb_pll.create_clkout(self.cd_usb, 60e6, phase=-120, with_reset=False) # -120° from DECA's example (also validated with LUNA).
+            self.comb += ResetSignal("usb").eq(ResetSignal("sys"))
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
