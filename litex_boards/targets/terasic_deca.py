@@ -125,7 +125,7 @@ class BaseSoC(SoCCore):
             ]
             self.submodules.analyzer = LiteScopeAnalyzer(
                 analyzer_signals,
-                depth=512,
+                depth=128,
                 samplerate=self.sys_clk_freq,
                 clock_domain="sys",
                 register=True,
