@@ -17,7 +17,7 @@ from litex.soc.cores.clock import Max10PLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.video import VideoDVIPHY
-from litex.soc.cores.chipid import AlteraChipID, AlteraChipIDIP
+from litex.soc.cores.chipid import get_chipid_module
 from litex.soc.cores.led import LedChaser
 
 from liteeth.phy.mii import LiteEthPHYMII
@@ -108,13 +108,12 @@ class BaseSoC(SoCCore):
             self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi")
 
         # Chip ID ----------------------------------------------------------------------------------
-        self.submodules.chipid = AlteraChipID()
+        self.submodules.chipid = get_chipid_module(self.platform)
         # self.submodules.chipid = AlteraChipIDIP(self.platform)
-        self.chipid.finalize()
 
 
         # scope ------------------------------------------------------------------------------------
-        if True:
+        if False:
             from litescope import LiteScopeAnalyzer
             from litex.gen.fhdl.utils import get_signals
 
