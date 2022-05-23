@@ -119,6 +119,7 @@ class BaseSoC(SoCCore):
             from litex.gen.fhdl.utils import get_signals
 
             chipid_sigs = get_signals(self.chipid, recurse=True)
+            chipid_sigs -= get_signals(self.chipid.chip_id)
 
             analyzer_signals = [
                 *chipid_sigs,
