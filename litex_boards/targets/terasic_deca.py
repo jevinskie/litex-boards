@@ -111,27 +111,6 @@ class BaseSoC(SoCCore):
         self.submodules.chipid = get_chipid_module(self.platform)
         # self.submodules.chipid = AlteraChipIDIP(self.platform)
 
-
-        # scope ------------------------------------------------------------------------------------
-        if False:
-            from litescope import LiteScopeAnalyzer
-            from litex.gen.fhdl.utils import get_signals
-
-            chipid_sigs = get_signals(self.chipid, recurse=True)
-            chipid_sigs -= get_signals(self.chipid.chip_id)
-
-            analyzer_signals = [
-                *chipid_sigs,
-            ]
-            self.submodules.analyzer = LiteScopeAnalyzer(
-                analyzer_signals,
-                depth=128,
-                samplerate=self.sys_clk_freq,
-                clock_domain="sys",
-                register=True,
-                csr_csv="analyzer.csv",
-            )
-
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
             self.submodules.leds = LedChaser(

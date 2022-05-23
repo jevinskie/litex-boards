@@ -22,6 +22,7 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
 from litex.soc.cores.gpio import GPIOTristate
+from litex.soc.cores.chipid import get_chipid_module
 
 from litedram.modules import MT41K128M16
 from litedram.phy import s7ddrphy
@@ -122,6 +123,9 @@ class BaseSoC(SoCCore):
         if with_pmod_gpio:
             platform.add_extension(digilent_arty.raw_pmod_io("pmoda"))
             self.submodules.gpio = GPIOTristate(platform.request("pmoda"))
+
+        # Chip ID ----------------------------------------------------------------------------------
+        self.submodules.chipid = get_chipid_module(self.platform)
 
 # Build --------------------------------------------------------------------------------------------
 
