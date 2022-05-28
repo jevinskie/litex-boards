@@ -106,17 +106,18 @@ def qsf_to_pins(qsf_path: str):
     pin_groups = {}
     for group_name, pin_array in pin_arrays.items():
         pin_array.sort(key=lambda p: p["idx"])
-        print(pin_array)
         assert min([p["idx"] for p in pin_array]) == 0
         sz = max([p["idx"] for p in pin_array]) + 1
         assert sz == len(pin_array)
         iostd = None
-        if "iostd" in pin_array[0]:
+        # g_reserved gidel hawkeye hack
+        if "iostd" in pin_array[0] and not group_name.startswith("g_reserved"):
             iostd = pin_array[0]["iostd"]
             for p in pin_array:
                 assert p["iostd"] == iostd
         misc = None
-        if "misc" in pin_array[0]:
+        # g_reserved gidel hawkeye hack
+        if "misc" in pin_array[0] and not group_name.startswith("g_reserved"):
             misc = pin_array[0]["misc"]
             for p in pin_array:
                 # if 'misc' not in p:

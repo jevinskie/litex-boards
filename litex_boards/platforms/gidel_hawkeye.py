@@ -57,6 +57,7 @@ class Platform(AlteraPlatform):
 
     def __init__(self):
         AlteraPlatform.__init__(self, "10AX048E4F29E3SG", _io, _connectors)
+        self.add_platform_command('set_global_assignment -name RESERVE_PIN "AS INPUT TRI-STATED"')
 
     def create_programmer(self):
         return USBBlaster(cable_name="USB-BlasterII")
