@@ -161,13 +161,19 @@ def pins_to_litex(pins):
                     for mk, mv in misc.items():
                         lpin.append(f'Misc(["{mk}", "{mv}"])')
                 print("(" + ", ".join(lpin) + "),")
-    return
+            lsubsig = [f'"{pin_name}"', f'Pins("{" ".join(pads)}")']
+            if iostd is not None:
+                lsubsig.append(f'IOStandard("{iostd}")')
+            if misc is not None:
+                for mk, mv in misc.items():
+                    lsubsig.append(f'Misc(["{mk}", "{mv}"])')
+            print("Subsignal(" + ", ".join(lsubsig) + "),")
 
 
 if __name__ == "__main__":
     pins = qsf_to_pins(sys.argv[1])
-    # print(pins)
-    pp(pins)
+    print(pins)
+    # pp(pins)
     print(len(pins))
     pins_to_litex(pins)
     sys.exit(0)
