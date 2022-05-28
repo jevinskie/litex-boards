@@ -106,6 +106,7 @@ def qsf_to_pins(qsf_path: str):
     pin_groups = {}
     for group_name, pin_array in pin_arrays.items():
         pin_array.sort(key=lambda p: p["idx"])
+        print(pin_array)
         assert min([p["idx"] for p in pin_array]) == 0
         sz = max([p["idx"] for p in pin_array]) + 1
         assert sz == len(pin_array)
