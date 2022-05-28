@@ -19,13 +19,14 @@ from litex.soc.integration.builder import *
 from litex.soc.cores.video import VideoDVIPHY
 from litex.soc.cores.chipid import get_chipid_module
 from litex.soc.cores.led import LedChaser
+from litex.soc.cores.adc import Max10ADC
 
 from liteeth.phy.mii import LiteEthPHYMII
 
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
-    def __init__(self, platform, sys_clk_freq, with_usb_pll=False, ulpi=None):
+    def __init__(self, platform, sys_clk_freq, with_usb_pll=False, ulpi=None, with_adc_pll=False):
         self.rst = Signal()
         self.clock_domains.cd_sys    = ClockDomain()
         self.clock_domains.cd_hdmi   = ClockDomain()
@@ -53,6 +54,14 @@ class _CRG(Module):
             usb_pll.create_clkout(self.cd_usb, 60e6, phase=-120, with_reset=False) # -120° from DECA's example (also validated with LUNA).
             self.comb += ResetSignal("usb").eq(ResetSignal("sys"))
 
+        if with_adc_pll:
+            self.clock_domains.cd_adc = ClockDomain()
+            clk10_adc = platform.request("clk10")
+            self.submodules.pll_adc = pll_adc = Max10PLL(speedgrade="-6")
+            self.comb += pll_adc.reset.eq(self.rst)
+            pll_adc.register_clkin(clk10_adc, 10e6)
+            pll_adc.create_clkout(self.cd_adc, 10e6)  # first so it uses clkout[0]
+
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
@@ -63,7 +72,7 @@ class BaseSoC(SoCCore):
         self.platform = platform = terasic_deca.Platform()
 
         # CRG --------------------------------------------------------------------------------------
-        self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_usb_pll=False)
+        self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq, with_adc_pll=False)
 
         # SoCCore ----------------------------------------------------------------------------------
         # Defaults to JTAG-UART since no hardware UART.
@@ -84,7 +93,48 @@ class BaseSoC(SoCCore):
         # JTAGbone ---------------------------------------------------------------------------------
         if with_jtagbone:
             self.add_jtagbone()
-        
+
+        if True:
+            # Imports.
+            from litex.soc.cores import uart
+            from litex.soc.cores.jtag import JTAGPHY
+
+            # Core.
+            jtagbone_phy = JTAGPHY(device="gpio", chain=1, platform=self.platform)
+            jtagbone = uart.UARTBone(phy=jtagbone_phy, clk_freq=self.sys_clk_freq)
+            setattr(self.submodules, f"{name}_phy", jtagbone_phy)
+            setattr(self.submodules,          name, jtagbone)
+            self.bus.add_master(name=name, master=jtagbone.wishbone)
+
+
+        if True:
+            from litescope import LiteScopeAnalyzer
+
+            usb_rst = Signal()
+            self.comb += [
+                usb_rst.eq(ResetSignal("usb")),
+            ]
+
+            ulpi_sigs = get_signals(self.ulpi)
+            ulpi_sigs.remove(self.ulpi.clk)
+
+            analyzer_signals = [
+                *ulpi_sigs,
+                *get_signals(usb, recurse=False),
+                *get_signals(self.stream_inverter),
+                # *get_signals(usb.stream_to_host),
+                # *get_signals(usb.stream_to_device),
+                usb_rst,
+                self.crg.usb_pll.locked,
+            ]
+            self.submodules.analyzer = LiteScopeAnalyzer(
+                analyzer_signals,
+                depth=512,
+                clock_domain="sys",
+                register=True,
+                csr_csv="analyzer.csv",
+            )
+
         # Ethernet ---------------------------------------------------------------------------------
         if with_ethernet or with_etherbone:
             self.platform.toolchain.additional_sdc_commands += [
@@ -106,6 +156,9 @@ class BaseSoC(SoCCore):
         if with_video_terminal:
             self.submodules.videophy = VideoDVIPHY(platform.request("hdmi"), clock_domain="hdmi")
             self.add_video_terminal(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi")
+
+        # ADC --------------------------------------------------------------------------------------
+        # self.submodules.adc = Max10ADC(adc_num=0)
 
         # Chip ID ----------------------------------------------------------------------------------
         self.submodules.chipid = get_chipid_module(self.platform)

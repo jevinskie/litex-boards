@@ -273,7 +273,16 @@ _io = [
     ("gpio_serial", 0,
         Subsignal("tx", Pins("P8:3")),
         Subsignal("rx", Pins("P8:4")),
-        IOStandard("3.3-V LVTTL"))
+        IOStandard("3.3-V LVTTL")),
+
+    # GPIO JTAG
+    ("gpio_jtag", 0,
+        Subsignal("tck",  Pins("P8:5")),
+        Subsignal("tms",  Pins("P8:6")),
+        Subsignal("tdi",  Pins("P8:7")),
+        Subsignal("tdo",  Pins("P8:8")),
+        IOStandard("3.3-V LVTTL")
+    )
 ]
 
 # Connectors ---------------------------------------------------------------------------------------
