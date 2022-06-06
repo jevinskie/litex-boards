@@ -56,9 +56,8 @@ class BaseSoC(SoCCore):
 
         # JTAGbone ---------------------------------------------------------------------------------
         if os.path.exists("jtag.sdc"):
-            self.platform.toolchain.additional_sdc_commands = \
-                [l.rstrip() for l in open("jtag.sdc").readlines()] + \
-                self.platform.toolchain.additional_sdc_commands
+            self.platform.toolchain.additional_sdc_commands += \
+                [l.rstrip() for l in open("jtag.sdc").readlines()]
         else:
             raise ValueError("no jtag.sdc")
             self.platform.toolchain.additional_sdc_commands.insert(0,
@@ -68,26 +67,12 @@ class BaseSoC(SoCCore):
         self.add_jtagbone()
 
         # scope ------------------------------------------------------------------------------------
-        jtag_phy = self.jtagbone_phy.jtag
-        jtag_phy.do_finalize()
-        jtag_phy_sigs = get_signals(jtag_phy, recurse=True)
-        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tdo)
-        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tdi)
-        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tms)
-        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tck)
-        jtag_mod_sigs = get_signals(self.jtagbone_phy)
-        # jtag_source = self.jtagbone_phy.source
-        # jtag_sink = self.jtagbone_phy.sink
-
         analyzer_signals = list(set([
-            *jtag_phy_sigs,
-            *jtag_mod_sigs,
-            # jtag_source,
-            # jtag_sink,
+            Signal()
         ]))
 
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
-                                                     depth = 1024*4,
+                                                     depth = 1024*16,
                                                      clock_domain = "sys",
                                                      register = True,
                                                      csr_csv = "analyzer.csv")
@@ -98,10 +83,6 @@ class BaseSoC(SoCCore):
             self.submodules.leds = LedChaser(
                 pads         = led_pads,
                 sys_clk_freq = sys_clk_freq)
-        # self.comb += [
-        #     led_pads[1].eq(~led_pads[0]),
-        #     led_pads[2].eq(~led_pads[3]),
-        # ]
 
 
 # Build --------------------------------------------------------------------------------------------
@@ -122,8 +103,8 @@ def main():
     builder_args(parser)
     soc_core_args(parser)
 
-    argparse_set_def(parser, "cpu_type", "None")
-    argparse_set_def(parser, "uart_name", "stub")
+    # argparse_set_def(parser, "cpu_type", "None")
+    argparse_set_def(parser, "uart_name", "crossover")
     # argparse_set_def(parser, "uart_name", "gpio_serial")
     argparse_set_def(parser, "uart_baudrate", 2_000_000)
     argparse_set_def(parser, "csr_csv", "csr.csv")
