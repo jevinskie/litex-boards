@@ -49,10 +49,8 @@ class BaseSoC(SoCCore):
         # CRG --------------------------------------------------------------------------------------
         self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq)
 
-        # self.clock_domains.cd_sys = ClockDomain()
-        # self.comb += [
-        #     ClockSignal().eq(ClockSignal("jtag"))
-        # ]
+        # UARTbone ---------------------------------------------------------------------------------
+        # self.add_uartbone(name=kwargs["uart_name"], baudrate=kwargs["uart_baudrate"])
 
         # JTAGbone ---------------------------------------------------------------------------------
         self.platform.toolchain.additional_sdc_commands += [
@@ -90,8 +88,8 @@ def main():
     builder_args(parser)
     soc_core_args(parser)
 
-    argparse_set_def(parser, "cpu_type", "None")
-    argparse_set_def(parser, "uart_name", "crossover")
+    # argparse_set_def(parser, "cpu_type", "None")
+    argparse_set_def(parser, "uart_name", "gpio_serial")
     argparse_set_def(parser, "csr_csv", "csr.csv")
 
     args = parser.parse_args()

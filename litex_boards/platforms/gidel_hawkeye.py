@@ -30,19 +30,22 @@ _io = [
 
     # PCIe
 
-    # GPIO 1 (J4)
-
-    # GPIO 2 (J13)
-
-    # GPIO 3 (J14)
+    # GPIO serial
+    ("gpio_serial", 0,
+        Subsignal("tx", Pins("J14:1")),
+        Subsignal("rx", Pins("J14:3")),
+        IOStandard("3.0-V LVTTL")),
 ]
 
 # Connectors ---------------------------------------------------------------------------------------
 
 _connectors = [
-    # ("J4", "- K17 H16 "),
-    # ("J13", ""),
-    # ("J14", "")
+    # TODO: J4
+    # TODO: J13
+
+    # PIN        1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16
+    # Inter-board I/Os
+    ("J14", "-   E16 -   C16 -   E17 -   D17 -   C17 D23 D18 D22 C18 E22 D19 E21")
 ]
 
 # Platform -----------------------------------------------------------------------------------------
@@ -64,6 +67,12 @@ class Platform(AlteraPlatform):
             self.add_platform_command('set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"')
             self.add_platform_command('set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ')
             self.add_platform_command('set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQL256')
+        # Generate PLL clocsk in STA
+        self.toolchain.additional_sdc_commands.append("derive_pll_clocks -create_base_clocks -use_net_name")
+        self.toolchain.additional_sdc_commands.append("derive_clock_uncertainty")
+        # custom ini
+        if os.path.exists("quartus.ini"):
+            self.toolchain.additional_ini_settings += [l.strip() for l in open("quartus.ini").readlines()]
 
     def create_programmer(self):
         return USBBlaster(cable_name="USB-BlasterII")
@@ -71,9 +80,3 @@ class Platform(AlteraPlatform):
     def do_finalize(self, fragment):
         AlteraPlatform.do_finalize(self, fragment)
         self.add_period_constraint(self.lookup_request("clk125", loose=True), 1e9/125e6)
-        # Generate PLL clocsk in STA
-        self.toolchain.additional_sdc_commands.append("derive_pll_clocks -create_base_clocks -use_net_name")
-        self.toolchain.additional_sdc_commands.append("derive_clock_uncertainty")
-        # custom ini
-        if os.path.exists("quartus.ini"):
-            self.toolchain.additional_ini_settings += open("quartus.ini").readlines()
