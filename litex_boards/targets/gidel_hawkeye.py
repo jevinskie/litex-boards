@@ -12,10 +12,12 @@ import argparse
 from migen import *
 from litex_boards.platforms import gidel_hawkeye
 
+from litex.gen.fhdl.utils import get_signals
 from litex.soc.cores.clock import Arria10FPLL, Arria10IOPLL
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
+from litescope import LiteScopeAnalyzer
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -38,7 +40,7 @@ class _CRG(Module):
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, sys_clk_freq=int(150e6), with_led_chaser=True, **kwargs):
+    def __init__(self, sys_clk_freq=int(200), with_led_chaser=True, **kwargs):
         self.platform = platform = gidel_hawkeye.Platform()
 
         # SoCCore ----------------------------------------------------------------------------------
@@ -50,13 +52,45 @@ class BaseSoC(SoCCore):
         self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq)
 
         # UARTbone ---------------------------------------------------------------------------------
-        # self.add_uartbone(name=kwargs["uart_name"], baudrate=kwargs["uart_baudrate"])
+        self.add_uartbone(name="gpio_serial", baudrate=kwargs["uart_baudrate"])
 
         # JTAGbone ---------------------------------------------------------------------------------
-        self.platform.toolchain.additional_sdc_commands += [
-            'create_clock -name jtag -period 30.0 [get_ports {altera_reserved_tck}]',
-        ]
+        if os.path.exists("jtag.sdc"):
+            self.platform.toolchain.additional_sdc_commands = \
+                [l.rstrip() for l in open("jtag.sdc").readlines()] + \
+                self.platform.toolchain.additional_sdc_commands
+        else:
+            raise ValueError("no jtag.sdc")
+            self.platform.toolchain.additional_sdc_commands.insert(0,
+                'create_clock -name jtag -period 30.0 [get_ports {altera_reserved_tck}]',
+            )
+
         self.add_jtagbone()
+
+        # scope ------------------------------------------------------------------------------------
+        jtag_phy = self.jtagbone_phy.jtag
+        jtag_phy.do_finalize()
+        jtag_phy_sigs = get_signals(jtag_phy, recurse=True)
+        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tdo)
+        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tdi)
+        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tms)
+        jtag_phy_sigs.remove(jtag_phy.altera_reserved_tck)
+        jtag_mod_sigs = get_signals(self.jtagbone_phy)
+        # jtag_source = self.jtagbone_phy.source
+        # jtag_sink = self.jtagbone_phy.sink
+
+        analyzer_signals = list(set([
+            *jtag_phy_sigs,
+            *jtag_mod_sigs,
+            # jtag_source,
+            # jtag_sink,
+        ]))
+
+        self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
+                                                     depth = 1024*4,
+                                                     clock_domain = "sys",
+                                                     register = True,
+                                                     csr_csv = "analyzer.csv")
 
         # Leds -------------------------------------------------------------------------------------
         led_pads = platform.request_remaining("user_led")
@@ -84,12 +118,14 @@ def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Arria V thingy")
     parser.add_argument("--build",               action="store_true", help="Build bitstream.")
     parser.add_argument("--load",                action="store_true", help="Load bitstream.")
-    parser.add_argument("--sys-clk-freq",        default=150e6,       help="System clock frequency.")
+    parser.add_argument("--sys-clk-freq",        default=200e6,       help="System clock frequency.")
     builder_args(parser)
     soc_core_args(parser)
 
-    # argparse_set_def(parser, "cpu_type", "None")
-    argparse_set_def(parser, "uart_name", "gpio_serial")
+    argparse_set_def(parser, "cpu_type", "None")
+    argparse_set_def(parser, "uart_name", "stub")
+    # argparse_set_def(parser, "uart_name", "gpio_serial")
+    argparse_set_def(parser, "uart_baudrate", 2_000_000)
     argparse_set_def(parser, "csr_csv", "csr.csv")
 
     args = parser.parse_args()

@@ -72,7 +72,7 @@ class Platform(AlteraPlatform):
         self.toolchain.additional_sdc_commands.append("derive_clock_uncertainty")
         # custom ini
         if os.path.exists("quartus.ini"):
-            self.toolchain.additional_ini_settings += [l.strip() for l in open("quartus.ini").readlines()]
+            self.toolchain.additional_ini_settings += [l.rstrip() for l in open("quartus.ini").readlines()]
 
     def create_programmer(self):
         return USBBlaster(cable_name="USB-BlasterII")
