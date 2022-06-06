@@ -4,6 +4,8 @@
 # Copyright (c) 2022 Jevin Sweval <jevinsweval@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
+import os
+
 from litex.build.generic_platform import *
 from litex.build.altera import AlteraPlatform
 from litex.build.altera.programmer import USBBlaster
@@ -49,13 +51,19 @@ class Platform(AlteraPlatform):
     default_clk_name   = "clk125"
     default_clk_period = 1e9/125e6
     create_rbf         = False
+    dump_atoms         = True
 
-    def __init__(self):
+    def __init__(self, create_pof=False):
         AlteraPlatform.__init__(self, "10AX048E4F29E3SG", _io, _connectors)
         self.add_platform_command('set_global_assignment -name RESERVE_PIN "AS INPUT TRI-STATED"')
         self.add_platform_command('set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "1.8 V"')
+        self.add_platform_command('set_global_assignment -name PRESERVE_UNUSED_XCVR_CHANNEL ON')
         self.add_platform_command('set_global_assignment -name RESERVE_DATA0_AFTER_CONFIGURATION "USE AS REGULAR IO"')
-
+        if create_pof:
+            self.add_platform_command('set_global_assignment -name USE_CONFIGURATION_DEVICE ON')
+            self.add_platform_command('set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"')
+            self.add_platform_command('set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ')
+            self.add_platform_command('set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQL256')
 
     def create_programmer(self):
         return USBBlaster(cable_name="USB-BlasterII")
@@ -66,3 +74,6 @@ class Platform(AlteraPlatform):
         # Generate PLL clocsk in STA
         self.toolchain.additional_sdc_commands.append("derive_pll_clocks -create_base_clocks -use_net_name")
         self.toolchain.additional_sdc_commands.append("derive_clock_uncertainty")
+        # custom ini
+        if os.path.exists("quartus.ini"):
+            self.toolchain.additional_ini_settings += open("quartus.ini").readlines()

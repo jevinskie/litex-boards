@@ -30,7 +30,7 @@ class _CRG(Module):
         clk125 = platform.request("clk125")
 
         # PLL
-        self.submodules.pll = pll = Arria10IOPLL()
+        self.submodules.pll = pll = Arria10FPLL()
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk125, 125e6)
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
@@ -47,12 +47,12 @@ class BaseSoC(SoCCore):
             **kwargs)
 
         # CRG --------------------------------------------------------------------------------------
-        # self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq)
+        self.submodules.crg = self.crg = _CRG(platform, sys_clk_freq)
 
-        self.clock_domains.cd_sys = ClockDomain()
-        self.comb += [
-            ClockSignal().eq(ClockSignal("jtag"))
-        ]
+        # self.clock_domains.cd_sys = ClockDomain()
+        # self.comb += [
+        #     ClockSignal().eq(ClockSignal("jtag"))
+        # ]
 
         # JTAGbone ---------------------------------------------------------------------------------
         self.platform.toolchain.additional_sdc_commands += [
@@ -61,10 +61,15 @@ class BaseSoC(SoCCore):
         self.add_jtagbone()
 
         # Leds -------------------------------------------------------------------------------------
+        led_pads = platform.request_remaining("user_led")
         if with_led_chaser:
             self.submodules.leds = LedChaser(
-                pads         = platform.request_remaining("user_led"),
+                pads         = led_pads,
                 sys_clk_freq = sys_clk_freq)
+        # self.comb += [
+        #     led_pads[1].eq(~led_pads[0]),
+        #     led_pads[2].eq(~led_pads[3]),
+        # ]
 
 
 # Build --------------------------------------------------------------------------------------------
@@ -85,6 +90,7 @@ def main():
     builder_args(parser)
     soc_core_args(parser)
 
+    argparse_set_def(parser, "cpu_type", "None")
     argparse_set_def(parser, "uart_name", "crossover")
     argparse_set_def(parser, "csr_csv", "csr.csv")
 
