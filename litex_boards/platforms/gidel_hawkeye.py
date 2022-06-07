@@ -27,8 +27,8 @@ _io = [
     # SGMII SFP+ Ethernet
     # SFP+ Port B
     ("eth", 0,
-        Subsignal("mdio", Pins("AF14"), Misc(["WEAK_PULL_UP_RESISTOR", "ON"])),
-        Subsignal("mdc", Pins("AG14")),
+        Subsignal("sda", Pins("AF14"), Misc(["WEAK_PULL_UP_RESISTOR", "ON"])),
+        Subsignal("scl", Pins("AG14")),
         IOStandard("1.8 V")
     ),
 

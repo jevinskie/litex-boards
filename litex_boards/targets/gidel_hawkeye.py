@@ -18,8 +18,7 @@ from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 from litex.soc.cores.led import LedChaser
 from litescope import LiteScopeAnalyzer
-from liteeth.phy.common import LiteEthPHYMDIO
-from litex.soc.interconnect.csr import AutoCSR
+from litex.soc.cores.bitbang import I2CMaster
 
 
 # CRG ----------------------------------------------------------------------------------------------
@@ -41,12 +40,6 @@ class _CRG(Module):
         pll.create_clkout(self.cd_sys,  sys_clk_freq)
 
 # BaseSoC ------------------------------------------------------------------------------------------
-
-
-class DummyEthPhy(Module, AutoCSR):
-    def __init__(self, eth_pads):
-        self.submodules.mdio = LiteEthPHYMDIO(eth_pads)
-
 
 class BaseSoC(SoCCore):
     def __init__(self, sys_clk_freq=int(200), with_led_chaser=True, **kwargs):
@@ -77,11 +70,12 @@ class BaseSoC(SoCCore):
 
         # Ethernet ---------------------------------------------------------------------------------
         eth_pads = platform.request("eth")
-        self.submodules.ethphy = ethphy = DummyEthPhy(eth_pads)
+        self.submodules.eth_i2c = eth_i2c = I2CMaster(eth_pads)
 
         # scope ------------------------------------------------------------------------------------
         analyzer_signals = list(set([
             eth_pads,
+            *get_signals(eth_i2c),
         ]))
 
         self.submodules.analyzer = LiteScopeAnalyzer(analyzer_signals,
