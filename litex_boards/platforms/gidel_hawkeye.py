@@ -24,7 +24,15 @@ _io = [
     ("user_led", 3, Pins("E20"),  IOStandard("3.0-V LVTTL")),
     ("user_led", 4, Pins("D20"),  IOStandard("3.0-V LVTTL")),
 
-    # SGMII Ethernet
+    # SGMII SFP+ Ethernet
+    # SFP+ Port B
+    ("eth", 0,
+        Subsignal("mdio", Pins("AF14"), Misc(["WEAK_PULL_UP_RESISTOR", "ON"])),
+        Subsignal("mdc", Pins("AG14")),
+        IOStandard("1.8 V")
+    ),
+
+    # SFP+ Port C
 
     # DDR4 SDRAM
 
@@ -34,7 +42,8 @@ _io = [
     ("gpio_serial", 0,
         Subsignal("tx", Pins("J14:1")),
         Subsignal("rx", Pins("J14:3")),
-        IOStandard("3.0-V LVTTL")),
+        IOStandard("3.0-V LVTTL")
+    ),
 ]
 
 # Connectors ---------------------------------------------------------------------------------------
