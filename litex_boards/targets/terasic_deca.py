@@ -19,7 +19,7 @@ from litex.soc.integration.builder import *
 from litex.soc.cores.video import VideoDVIPHY
 from litex.soc.cores.chipid import get_chipid_module
 from litex.soc.cores.led import LedChaser
-from litex.soc.cores.adc import Max10ADC
+# from litex.soc.cores.adc import Max10ADC
 
 from liteeth.phy.mii import LiteEthPHYMII
 
