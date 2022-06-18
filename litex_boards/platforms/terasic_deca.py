@@ -91,49 +91,44 @@ _io = [
         Subsignal("a", Pins(
             "E21 V20 V21 C20 Y21 J14 V18 U20",
             "Y20 W22 C22 Y22 N18 V22 W20"),
-            IOStandard("SSTL-15"),
         ),
-        Subsignal("ba",    Pins("D19 W19 F19"), IOStandard("SSTL-15")),
-        Subsignal("ras_n", Pins("D22"), IOStandard("SSTL-15")),
-        Subsignal("cas_n", Pins("E20"), IOStandard("SSTL-15")),
-        Subsignal("we_n",  Pins("E22"), IOStandard("SSTL-15")),
+        Subsignal("ba",    Pins("D19 W19 F19")),
+        Subsignal("ras_n", Pins("D22")),
+        Subsignal("cas_n", Pins("E20")),
+        Subsignal("we_n",  Pins("E22")),
         Subsignal("dm", Pins("N19 J15"),
             IOStandard("SSTL-15"),
-            Misc('OUTPUT_TERMINATION "SERIES 50 OHM WITH CALIBRATION"'),
+            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
             Misc("DM_PIN ON")
         ),
         Subsignal("dq", Pins(
             "L20 L19 L18 M15 M18 M14 M20 N20",
             "K19 K18 J18 K20 H18 J20 H20 H19"),
-            IOStandard("SSTL-15"),
-            Misc('INPUT_TERMINATION "PARALLEL 50 OHM WITH CALIBRATION"'),
             Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
         ),
         Subsignal("dqs_p", Pins("L14 K14"),
             IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('INPUT_TERMINATION "PARALLEL 50 OHM WITH CALIBRATION"'),
-            Misc('OUTPUT_TERMINATION "SERIES 50 OHM WITH CALIBRATION"')
+            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"')
         ),
         Subsignal("dqs_n", Pins("L15 K15"),
             IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('INPUT_TERMINATION "PARALLEL 50 OHM WITH CALIBRATION"'),
-            Misc('OUTPUT_TERMINATION "SERIES 50 OHM WITH CALIBRATION"')
+            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"')
         ),
         Subsignal("clk_p", Pins("D18"),
             IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('OUTPUT_TERMINATION "SERIES 50 OHM WITH CALIBRATION"'),
-            Misc("D5_DELAY 2")
+            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
         ),
         Subsignal("clk_n", Pins("E18"),
             IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('OUTPUT_TERMINATION "SERIES 50 OHM WITH CALIBRATION"'),
-            Misc("D5_DELAY 2")
+            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
+            Misc(["CKN_CK_PAIR ON", PinRef(subsignal="clk_p", relative=True)])
+            # Misc(["CKN_CK_PAIR", PinRef(port="ddram", subsignal="clk_p")])
         ),
-        Subsignal("cs_n",    Pins("F22"), IOStandard("SSTL-15")),
-        Subsignal("cke",     Pins("B22"), IOStandard("SSTL-15")),
-        Subsignal("odt",     Pins("G22"), IOStandard("SSTL-15")),
-        Subsignal("reset_n", Pins("U19"), IOStandard("SSTL-15")),
-        Misc("CURRENT_STRENGTH_NEW MAX"),
+        Subsignal("cs_n",    Pins("F22")),
+        Subsignal("cke",     Pins("B22")),
+        Subsignal("odt",     Pins("G22")),
+        Subsignal("reset_n", Pins("U19")),
+        IOStandard("SSTL-15"),
         Misc("PACKAGE_SKEW_COMPENSATION OFF")
     ),
 
