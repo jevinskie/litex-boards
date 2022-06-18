@@ -108,7 +108,11 @@ _io = [
         ),
         Subsignal("dqs_p", Pins("L14 K14"),
             IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"')
+            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
+            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=0), PinRef(subsignal="dq", subidx=slice(8), relative=True)]),
+            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=1), PinRef(subsignal="dq", subidx=slice(8, 16), relative=True)]),
+            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=0), PinRef(subsignal="dm", subidx=0, relative=True)]),
+            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=1), PinRef(subsignal="dm", subidx=1, relative=True)])
         ),
         Subsignal("dqs_n", Pins("L15 K15"),
             IOStandard("DIFFERENTIAL 1.5-V SSTL"),
@@ -122,7 +126,6 @@ _io = [
             IOStandard("DIFFERENTIAL 1.5-V SSTL"),
             Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
             Misc(["CKN_CK_PAIR ON", PinRef(subsignal="clk_p", relative=True)])
-            # Misc(["CKN_CK_PAIR", PinRef(port="ddram", subsignal="clk_p")])
         ),
         Subsignal("cs_n",    Pins("F22")),
         Subsignal("cke",     Pins("B22")),
