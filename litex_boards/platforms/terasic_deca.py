@@ -88,51 +88,27 @@ _io = [
 
     # DDR3 SDRAM.
     ("ddram", 0,
-        Subsignal("a", Pins(
+        Subsignal("a",     Pins(
             "E21 V20 V21 C20 Y21 J14 V18 U20",
             "Y20 W22 C22 Y22 N18 V22 W20"),
         ),
-        Subsignal("ba",    Pins("D19 W19 F19")),
-        Subsignal("ras_n", Pins("D22")),
-        Subsignal("cas_n", Pins("E20")),
-        Subsignal("we_n",  Pins("E22")),
-        Subsignal("dm", Pins("N19 J15"),
-            IOStandard("SSTL-15"),
-            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
-            Misc("DM_PIN ON")
-        ),
-        Subsignal("dq", Pins(
+        Subsignal("ba",     Pins("D19 W19 F19")),
+        Subsignal("ras_n",  Pins("D22")),
+        Subsignal("cas_n",  Pins("E20")),
+        Subsignal("we_n",   Pins("E22")),
+        Subsignal("dm",     Pins("N19 J15")),
+        Subsignal("dq",     Pins(
             "L20 L19 L18 M15 M18 M14 M20 N20",
-            "K19 K18 J18 K20 H18 J20 H20 H19"),
-            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
-        ),
-        Subsignal("dqs_p", Pins("L14 K14"),
-            IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
-            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=0), PinRef(subsignal="dq", subidx=slice(8), relative=True)]),
-            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=1), PinRef(subsignal="dq", subidx=slice(8, 16), relative=True)]),
-            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=0), PinRef(subsignal="dm", subidx=0, relative=True)]),
-            Misc(["DQ_GROUP 9", PinRef(identity=True, subidx=1), PinRef(subsignal="dm", subidx=1, relative=True)])
-        ),
-        Subsignal("dqs_n", Pins("L15 K15"),
-            IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"')
-        ),
-        Subsignal("clk_p", Pins("D18"),
-            IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
-        ),
-        Subsignal("clk_n", Pins("E18"),
-            IOStandard("DIFFERENTIAL 1.5-V SSTL"),
-            Misc('OUTPUT_TERMINATION "SERIES 40 OHM WITH CALIBRATION"'),
-            Misc(["CKN_CK_PAIR ON", PinRef(subsignal="clk_p", relative=True)])
-        ),
+            "K19 K18 J18 K20 H18 J20 H20 H19")),
+        Subsignal("dqs_p",   Pins("L14 K14")),
+        Subsignal("dqs_n",   Pins("L15 K15")),
+        Subsignal("clk_p",   Pins("D18")),
+        Subsignal("clk_n",   Pins("E18")),
         Subsignal("cs_n",    Pins("F22")),
         Subsignal("cke",     Pins("B22")),
         Subsignal("odt",     Pins("G22")),
         Subsignal("reset_n", Pins("U19")),
         IOStandard("SSTL-15"),
-        Misc("PACKAGE_SKEW_COMPENSATION OFF")
     ),
 
     # Audio.
